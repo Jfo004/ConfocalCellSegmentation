@@ -44,6 +44,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import mcib3d.geom.Object3D;
 import mcib3d.geom.Objects3DPopulation;
@@ -122,9 +124,12 @@ public class AutomaticCellFinder implements Runnable{
             //flip image if needed
             
             this.cellCutoffIntensity = 1;
+            
             WaitForUserDialog dialog = new WaitForUserDialog("Subtract, set 0 and rotate");
             dialog.show();
             projection.hide();
+            waitForAdjustment();
+            
             targetImageImp.hide();
             if (croppedImage != null) croppedImage.close();
             if (RoiManager.getInstance() != null) RoiManager.getInstance().reset();
@@ -166,6 +171,18 @@ public class AutomaticCellFinder implements Runnable{
                 return;
             }
         }
+    }
+    
+    private void waitForAdjustment() {
+        //send message to unlock and images
+        try {
+            wait();
+        } catch (InterruptedException ex) {
+            System.out.println("Wait interrupted");
+            
+        }
+        
+        //send message to lock
     }
     
     private void createMeasurementList() {
