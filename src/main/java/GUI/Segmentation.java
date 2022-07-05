@@ -4,10 +4,18 @@
  */
 package GUI;
 
+import experiments.Measurement;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.gui.Roi;
+import ij.process.ImageProcessor;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import javax.swing.DefaultListModel;
+import tools.AutomaticCellFinder;
 
 /**
  *
@@ -20,6 +28,8 @@ public class Segmentation extends javax.swing.JFrame {
      */
     public Segmentation() {
         initComponents();
+        dayThreshold = new HashMap();
+        lockButtons();
     }
 
     /**
@@ -51,7 +61,8 @@ public class Segmentation extends javax.swing.JFrame {
         thresholdDisplay = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setResizable(false);
 
         okButton.setText("Ok ");
         okButton.addActionListener(new java.awt.event.ActionListener() {
@@ -69,6 +80,16 @@ public class Segmentation extends javax.swing.JFrame {
             }
         });
 
+        maskjList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                maskjListMouseClicked(evt);
+            }
+        });
+        maskjList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                maskjListValueChanged(evt);
+            }
+        });
         jScrollPane1.setViewportView(maskjList);
 
         addMaskButton.setText("Add mask");
@@ -87,11 +108,13 @@ public class Segmentation extends javax.swing.JFrame {
             .addGroup(maskPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(maskPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(addMaskButton)
                     .addComponent(maskLabel)
-                    .addComponent(removeMaskButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(maskPanelLayout.createSequentialGroup()
+                        .addGroup(maskPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(addMaskButton)
+                            .addComponent(removeMaskButton))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         maskPanelLayout.setVerticalGroup(
@@ -272,9 +295,18 @@ public class Segmentation extends javax.swing.JFrame {
     }//GEN-LAST:event_decreaseStepSizeButtonActionPerformed
 
     private void flipHButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flipHButtonActionPerformed
+        wasFlippedH = !wasFlippedH;
+        
         bfImp.getProcessor().flipHorizontal();
         fluoImp.getProcessor().flipHorizontal();
-        stackImp.getProcessor().flipHorizontal();
+        ImageStack stack = stackImp.getStack();
+        for (int i = 1; i <= stack.size(); i++) {
+            stack.getProcessor(i).flipHorizontal();
+        }
+        
+        bfImp.updateAndDraw();
+        fluoImp.updateAndDraw();
+        stackImp.updateAndDraw();
     }//GEN-LAST:event_flipHButtonActionPerformed
 
     private void increaseStepSizeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_increaseStepSizeButtonActionPerformed
@@ -283,9 +315,18 @@ public class Segmentation extends javax.swing.JFrame {
     }//GEN-LAST:event_increaseStepSizeButtonActionPerformed
 
     private void flipVButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flipVButtonActionPerformed
+        wasFlippedV = !wasFlippedV;
+        
         bfImp.getProcessor().flipVertical();
         fluoImp.getProcessor().flipVertical();
-        stackImp.getProcessor().flipVertical();
+        ImageStack stack = stackImp.getStack();
+        for (int i = 1; i <= stack.size(); i++) {
+            stack.getProcessor(i).flipVertical();
+        }
+        
+        bfImp.updateAndDraw();
+        fluoImp.updateAndDraw();
+        stackImp.updateAndDraw();
     }//GEN-LAST:event_flipVButtonActionPerformed
 
     private void addMaskButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addMaskButtonActionPerformed
@@ -293,30 +334,47 @@ public class Segmentation extends javax.swing.JFrame {
         if (selectedRoi == null) return;
         int roiType = selectedRoi.getType();
         if (!(roiType == Roi.POLYGON || roiType != Roi.RECTANGLE || roiType != Roi.OVAL)) return;
-        roiList.add(selectedRoi);     
+        roiList.add(selectedRoi); 
+        updateMaskList();
         
     }//GEN-LAST:event_addMaskButtonActionPerformed
 
     private void removeMaskButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeMaskButtonActionPerformed
-        if (maskjList.getSelectedIndices().length == 0) return;
-        int[] selections = maskjList.getSelectedIndices();
-        for (int i = selections.length -1; i > 0; i--) {
-            roiList.remove(i);
-        }
+
+        if (maskjList.getSelectedIndex() == -1) return;
+        roiList.remove(maskjList.getSelectedIndex());
         updateMaskList();
     }//GEN-LAST:event_removeMaskButtonActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         lockButtons();
-        //Process and hide image
-        //View message
-        //send notify
+        synchronized (this.stackImp) {
+            processStack();
+            this.bfImp.unlock();
+            this.fluoImp.unlock();
+            this.stackImp.unlock();
+            this.stackImp.notify();
+        }
     }//GEN-LAST:event_okButtonActionPerformed
 
     private void thresholdSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_thresholdSliderStateChanged
         thresholdDisplay.setText(String.valueOf(thresholdSlider.getValue()));
+        fluoImp.getProcessor().setThreshold(0, thresholdSlider.getValue(), ImageProcessor.RED_LUT);
+        fluoImp.updateAndDraw();
         //View in image make copy and show
     }//GEN-LAST:event_thresholdSliderStateChanged
+
+    private void maskjListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_maskjListMouseClicked
+        // TODO add your handling code here:
+    }//GEN-LAST:event_maskjListMouseClicked
+
+    private void maskjListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_maskjListValueChanged
+        int selectedIndex = maskjList.getSelectedIndex();
+        if (selectedIndex == -1) return;
+        Roi selectedRoi = roiList.get(maskjList.getSelectedIndex());
+        this.fluoImp.setRoi(selectedRoi);
+        this.stackImp.setRoi(selectedRoi);
+    }//GEN-LAST:event_maskjListValueChanged
 
     
     /**
@@ -380,7 +438,11 @@ public class Segmentation extends javax.swing.JFrame {
     ImagePlus bfImp;
     ImagePlus fluoImp;
     ImagePlus stackImp;
-    
+    ImageProcessor originalFluoIP;
+    String measurementDay;
+    HashMap<String,Integer> dayThreshold;
+    boolean wasFlippedV;
+    boolean wasFlippedH;
     
     private void lockButtons() {
         thresholdSlider.setEnabled(false);
@@ -406,18 +468,32 @@ public class Segmentation extends javax.swing.JFrame {
         maskjList.setEnabled(true);
     }
     
-    private void setIamges(ImagePlus bfImp, ImagePlus fluoImp, ImagePlus stackImp) {
+    public void setIamges(ImagePlus bfImp, ImagePlus fluoImp, ImagePlus stackImp, Measurement measurement) {
         this.bfImp = bfImp;
         this.fluoImp = fluoImp;
-        this.stackImp = stackImp;        
+        this.stackImp = stackImp;
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
+        this.measurementDay = formatter.format(Date.from(measurement.getAcquisitionTime()));
+        wasFlippedH = false;
+        wasFlippedV = false;
+        
+        this.bfImp.show();
+        this.fluoImp.show();
+        this.stackImp.show();
+        
+        this.bfImp.lock();
+        this.fluoImp.lock();
+        this.stackImp.lock();
         
         int maximum = (int) fluoImp.getStatistics().max;
+        
         thresholdSlider.setMinimum(0);
         thresholdSlider.setMaximum(maximum);
         
+        if (dayThreshold.containsKey(measurementDay)) thresholdSlider.setValue(dayThreshold.get(measurementDay));
+        else thresholdSlider.setValue(0);
         roiList.clear();
         updateMaskList();
-        
         unlockButtons();
     }
     
@@ -427,5 +503,28 @@ public class Segmentation extends javax.swing.JFrame {
             listModel.addElement(roi);
         }
         maskjList.setModel(listModel);
+    }
+    
+    private void processStack() {
+        
+        this.bfImp.hide();
+        this.fluoImp.hide();
+        this.stackImp.hide();
+        
+        dayThreshold.put(measurementDay, thresholdSlider.getValue());
+        
+        ImageStack stack = stackImp.getStack();
+        for (int i = 1; i <= stack.getSize(); i++) {
+            ImageProcessor ip = stack.getProcessor(i);
+            ip.subtract((double) thresholdSlider.getValue());
+            ip.setColor(0);
+            for (Roi roi : roiList) {
+                ip.fill(roi);  
+            }    
+        }
+        stackImp.setStack(stack);
+        stackImp.setProperty("flippedV", wasFlippedV);
+        stackImp.setProperty("flippedH", wasFlippedH);
+        stackImp.updateAndDraw();
     }
 }

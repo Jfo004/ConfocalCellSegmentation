@@ -6,6 +6,7 @@
 package tools;
 
 import GUI.MainMenuGUI;
+import GUI.Segmentation;
 import experiments.Constants;
 import experiments.Experiment;
 import experiments.Fish;
@@ -71,6 +72,7 @@ public class AutomaticCellFinder implements Runnable{
     private ArrayList<Measurement> measurementList = new ArrayList();
     private int cellChannel;
     private double cellCutoffIntensity;
+    private Segmentation userInterface;
     
     
     public AutomaticCellFinder(Experiment experiment, MainMenuGUI parent, int cellChannel) {
@@ -83,30 +85,40 @@ public class AutomaticCellFinder implements Runnable{
     public void run() {
         sendStartMessage();
         createMeasurementList();
+        this.userInterface = new Segmentation();
+        userInterface.setVisible(true);
         segmentCells();
+        userInterface.dispose();
         sendStopMessage("Cell Segmenter");        
     }
 
 
     private void segmentCells() {
+        //Keeping track of loop for updates
         int total = measurementList.size();
         int current = 0;
+        
+        //Segmentation loop
         for (Measurement measurement : measurementList) {
+            
+            //Send updates
             sendUpdateMessage(measurement.getFileName(), current, total);
             current++;
             sendFileUpdateMessage("Importing", 0, 5);
-            ImagePlus targetImageImp = importCroppedChannel(measurement);
+            
+            //Import Stack
+            ImagePlus originalTargetImp = importCroppedChannel(measurement);
             
             //Manual processing
             //sendFileUpdateMessage("Pre-processing", 1, 5);
-            targetImageImp = preProcess(targetImageImp);
+            ImagePlus targetImp = preProcess(originalTargetImp.duplicate());
             ZProjector zp = new ZProjector();
             zp.setMethod(ZProjector.MAX_METHOD);
-            zp.setImage(targetImageImp);
+            zp.setImage(targetImp);
             zp.doProjection();
             ImagePlus projection = zp.getProjection();
             projection.show();
-            targetImageImp.show();
+            targetImp.show();
             ArrayList<ImageAnalysis> analysisList = measurement.getAnalyses();
             ImagePlus croppedImage = new ImagePlus();
             for (ImageAnalysis analysis : analysisList) {
@@ -117,6 +129,8 @@ public class AutomaticCellFinder implements Runnable{
                     break;
                 }
             }
+            
+            
             //TODO implement rotation on import
             //user: 
             //find threshold and subtract
@@ -124,36 +138,59 @@ public class AutomaticCellFinder implements Runnable{
             //flip image if needed
             
             this.cellCutoffIntensity = 1;
+            synchronized (targetImp) {
+                
+                projection.unlock();
+                croppedImage.unlock();
+                targetImp.unlock();
+                if (userInterface == null) System.out.println("UserInterface Null");
+                userInterface.setIamges(croppedImage, projection, targetImp, measurement);
+                
+                try {
+                    targetImp.wait();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(AutomaticCellFinder.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
             
-            WaitForUserDialog dialog = new WaitForUserDialog("Subtract, set 0 and rotate");
-            dialog.show();
-            projection.hide();
-            waitForAdjustment();
+            //Flipping original
+            if((boolean)targetImp.getProperty("flippedV")) {
+                System.out.println("Flipped V");
+                ImageStack originalStack = originalTargetImp.getStack();
+                for (int i = 1; i <= originalStack.size(); i++) {
+                    originalStack.getProcessor(i).flipVertical();
+                }
+            }
+            if((boolean)targetImp.getProperty("flippedH")) {
+                System.out.println("Flipped H");
+                ImageStack originalStack = originalTargetImp.getStack();
+                for (int i = 1; i <= originalStack.size(); i++) {
+                    originalStack.getProcessor(i).flipHorizontal();
+                }
+            }
+
+            projection.changes= false;
+            projection.close();
+            croppedImage.changes= false;
+            croppedImage.close();
             
-            targetImageImp.hide();
-            if (croppedImage != null) croppedImage.close();
-            if (RoiManager.getInstance() != null) RoiManager.getInstance().reset();
-            
-            ImagePlus seedImageImp = targetImageImp.duplicate();
+            ImagePlus seedImageImp = targetImp.duplicate();
             GaussianBlur3D.blur(seedImageImp, 2, 2, 2);
-            
-            
-            
-            
+
             ImageHandler seedImageSource;
-            if (targetImageImp.getProcessor() instanceof FloatProcessor) seedImageSource = new ImageFloat(seedImageImp);
-            else if (targetImageImp.getProcessor() instanceof ShortProcessor) seedImageSource = new ImageShort(seedImageImp);
-            else if (targetImageImp.getProcessor() instanceof ByteProcessor) seedImageSource = new ImageByte(seedImageImp);
+            if (targetImp.getProcessor() instanceof FloatProcessor) seedImageSource = new ImageFloat(seedImageImp);
+            else if (targetImp.getProcessor() instanceof ShortProcessor) seedImageSource = new ImageShort(seedImageImp);
+            else if (targetImp.getProcessor() instanceof ByteProcessor) seedImageSource = new ImageByte(seedImageImp);
             else {
-                System.out.println(targetImageImp.getTitle() + " processor type not found.");
+                System.out.println(targetImp.getTitle() + " processor type not found.");
                 continue;
             }
             ImageHandler targetImage;
-            if (targetImageImp.getProcessor() instanceof FloatProcessor) targetImage = new ImageFloat(targetImageImp);
-            else if (targetImageImp.getProcessor() instanceof ShortProcessor) targetImage = new ImageShort(targetImageImp);
-            else if (targetImageImp.getProcessor() instanceof ByteProcessor) targetImage = new ImageByte(targetImageImp);
+            if (targetImp.getProcessor() instanceof FloatProcessor) targetImage = new ImageFloat(targetImp);
+            else if (targetImp.getProcessor() instanceof ShortProcessor) targetImage = new ImageShort(targetImp);
+            else if (targetImp.getProcessor() instanceof ByteProcessor) targetImage = new ImageByte(targetImp);
             else {
-                System.out.println(targetImageImp.getTitle() + " processor type not found.");
+                System.out.println(targetImp.getTitle() + " processor type not found.");
                 continue;
             }
             
@@ -162,7 +199,7 @@ public class AutomaticCellFinder implements Runnable{
             sendFileUpdateMessage("Performing Watershed", 3, 5);
             ImageHandler segmentedImage = createSegmentedImage(targetImage, seedImage);
             sendFileUpdateMessage("Creating Analysis", 4, 5);
-            createAnalysis(segmentedImage, targetImage, measurement);
+            createAnalysis(segmentedImage, originalTargetImp, measurement);
             sendSaveMessage();
             sendFileUpdateMessage("Finished", 5, 5);
             
@@ -171,18 +208,6 @@ public class AutomaticCellFinder implements Runnable{
                 return;
             }
         }
-    }
-    
-    private void waitForAdjustment() {
-        //send message to unlock and images
-        try {
-            wait();
-        } catch (InterruptedException ex) {
-            System.out.println("Wait interrupted");
-            
-        }
-        
-        //send message to lock
     }
     
     private void createMeasurementList() {
@@ -419,7 +444,7 @@ public class AutomaticCellFinder implements Runnable{
 
     }
 
-    private void createAnalysis(ImageHandler segmentedImage, ImageHandler targetImage, Measurement measurement) {
+    private void createAnalysis(ImageHandler segmentedImage, ImagePlus targetImage, Measurement measurement) {
        String outputString = measurement.getConfocalFile().getParent()
                .concat("\\ProcessedFiles\\Segmented\\")
                .concat(measurement.getParentFish().getParentFishGroup().getGroupName())
@@ -435,7 +460,7 @@ public class AutomaticCellFinder implements Runnable{
        for (Double[] cellVolume :population.getMeasuresGeometrical()) System.out.println("Value: " + cellVolume[0] + " VolPix: " + cellVolume[1] + " volUnit: " + cellVolume[2]);
            
        population.saveObjects(outputCells.getAbsolutePath());
-       ImagePlus controlImage = RGBStackMerge.mergeChannels(new ImagePlus[] {targetImage.getImagePlus(), segmentedImage.getImagePlus()}, true);
+       ImagePlus controlImage = RGBStackMerge.mergeChannels(new ImagePlus[] {targetImage, segmentedImage.getImagePlus()}, true);
        controlImage.setC(1);
        controlImage.setLut(LUT.createLutFromColor(Color.green));
        controlImage.setC(2);
@@ -444,7 +469,8 @@ public class AutomaticCellFinder implements Runnable{
        IJ.saveAsTiff(controlImage, outputImage.getAbsolutePath());
        controlImage.close();
        segmentedImage.closeImagePlus();
-       targetImage.closeImagePlus();
+       targetImage.changes = false;
+       targetImage.close();
        ImageAnalysis analysis = new ImageAnalysis(Constants.ANALYSIS_CELLSSEGMENTED, new File[] {outputImage}, new int[]{-1}, measurement.getAcquisitionTime(), measurement);
        analysis.setRois(new File[] {outputCells});
        measurement.addAnalysis(analysis);
