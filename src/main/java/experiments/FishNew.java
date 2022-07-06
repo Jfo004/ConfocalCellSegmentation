@@ -20,7 +20,7 @@ import javax.xml.bind.annotation.XmlTransient;
  *
  * @author janlu
  */
-@XmlRootElement
+@XmlRootElement(name = "Subject")
 public class FishNew implements Serializable{
     private String name;
     private ArrayList<MeasurementNew> measurementList = new ArrayList();
@@ -33,7 +33,7 @@ public class FishNew implements Serializable{
         this.name = name;
         this.parent = parent;
     }
-    FishNew(String name, File confocalFile, FishGroupNew parent) {
+    public FishNew(String name, File confocalFile, FishGroupNew parent) {
         this.name = name.toUpperCase();
         this.measurementList.add(new MeasurementNew(confocalFile, this));
         this.parent = parent;
@@ -43,7 +43,7 @@ public class FishNew implements Serializable{
         measurementList.add(new MeasurementNew(confocalFile, this));
     }
 
-    @XmlAttribute
+    @XmlAttribute(name = "Subject_ID")
     public String getName() {
         return name;
     }
@@ -59,7 +59,7 @@ public class FishNew implements Serializable{
         this.parent = parent;
     }
     
-    @XmlTransient
+    @XmlElement(name = "Measurement")
     public ArrayList<MeasurementNew> getMeasurements() {
         return measurementList;
     }
@@ -78,6 +78,19 @@ public class FishNew implements Serializable{
             measurementNameArray[i] = measurementList.get(i).getFileName();
         }
         return measurementNameArray;
+    }
+
+    void updateParents(FishGroupNew parent) {
+        this.parent = parent;
+        for (MeasurementNew measurement : measurementList) {
+            measurement.updateParents(this);
+        }
+    }
+
+    void updateFile(File experimentPath) {
+        for (MeasurementNew measurement : measurementList) {
+            measurement.updateFile(experimentPath);
+        }
     }
 
     

@@ -4,10 +4,15 @@ package tools;
 import GUI.MainMenuGUI;
 import experiments.Constants;
 import experiments.Experiment;
+import experiments.ExperimentNew;
 import experiments.Fish;
 import experiments.FishGroup;
+import experiments.FishGroupNew;
+import experiments.FishNew;
 import experiments.ImageAnalysis;
+import experiments.ImageAnalysisNew;
 import experiments.Measurement;
+import experiments.MeasurementNew;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
@@ -37,9 +42,9 @@ public class OptiFlattener implements Runnable{
     private int zProjectionMethod;
     private OptiImageImporter iI;
     private int nFiles;
-    private Experiment experiment;
+    private ExperimentNew experiment;
     private MainMenuGUI parent;
-    private ArrayList<Measurement> measurementList = new ArrayList();
+    private ArrayList<MeasurementNew> measurementList = new ArrayList();
     private ArrayList<File> processedFiles = new ArrayList();
     private File outputDirectoryFile;
     private volatile boolean abort = false;
@@ -77,7 +82,7 @@ public class OptiFlattener implements Runnable{
         
     }
 
-    public OptiFlattener(Experiment experiment, MainMenuGUI parent, int tileSize, int projectionMethod) {
+    public OptiFlattener(ExperimentNew experiment, MainMenuGUI parent, int tileSize, int projectionMethod) {
         this.zProjectionMethod = projectionMethod;
         this.tileSize = tileSize;
         this.experiment = experiment;
@@ -272,7 +277,7 @@ public class OptiFlattener implements Runnable{
         String fileDirectoryString = measurementList.get(0).getConfocalFile().getParent() + "\\ProcessedFiles\\Flattened";
         outputDirectoryFile = new File(fileDirectoryString);
         
-        for (Measurement measurement : measurementList) {
+        for (MeasurementNew measurement : measurementList) {
             sendUpdateMessage(measurement.getConfocalFile().getName(), measurementList.indexOf(measurement), measurementList.size());
             flattenMeasurement(measurement);
             if (Thread.interrupted()) {
@@ -284,11 +289,11 @@ public class OptiFlattener implements Runnable{
     }
 
     private void createMeasurementList() {
-        for (FishGroup fishGroup : experiment.getGroups()) {
-            for (Fish fish : fishGroup.getFishList()) {
-                for (Measurement measurement : fish.getMeasurements()) {
+        for (FishGroupNew fishGroup : experiment.getGroups()) {
+            for (FishNew fish : fishGroup.getFishList()) {
+                for (MeasurementNew measurement : fish.getMeasurements()) {
                     boolean completed = false;
-                    for (ImageAnalysis analysis : measurement.getAnalyses()) {
+                    for (ImageAnalysisNew analysis : measurement.getAnalysisList()) {
                         if (analysis.isAnalysisType(Constants.ANALYSIS_FLATTENED)){
                             completed = true;
                         } 
@@ -299,12 +304,12 @@ public class OptiFlattener implements Runnable{
         }
     }
 
-    private void flattenMeasurement(Measurement measurement) { 
+    private void flattenMeasurement(MeasurementNew measurement) { 
         iI = new OptiImageImporter(measurement.getConfocalFile());
         nFiles = 1;
         outputDirectory = outputDirectoryFile.getAbsolutePath() 
-                + "\\" + measurement.getParentFish().getParentFishGroup().getGroupName() 
-                + "\\" + measurement.getParentFish().getName()
+                + "\\" + measurement.getParent().getParentFishGroup().getGroupName() 
+                + "\\" + measurement.getParent().getName()
                 + "\\" + measurement.getFileName();
         
         File makeDir = new File(outputDirectory);

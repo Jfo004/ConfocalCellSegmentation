@@ -6,6 +6,7 @@
 package GUI;
 
 import experiments.Experiment;
+import experiments.ExperimentNew;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -22,7 +23,7 @@ import tools.ExperimentImportCreated;
  * @author janlu
  */
 public class NewExperimentGUI extends javax.swing.JDialog {
-    private Experiment experiment;
+    private ExperimentNew experiment;
     private File confocalDirectory;
     private HashMap groupMap; 
     
@@ -246,11 +247,11 @@ public class NewExperimentGUI extends javax.swing.JDialog {
                 createdWellLayoutField.setForeground(new Color (255,0,0));
                 return;
             }
-            experiment = new Experiment(experimentNameField.getText(), confocalDirectory, timeOfFertilization, timeOfInjection, groupMap);
+            experiment = new ExperimentNew(experimentNameField.getText(), confocalDirectory, timeOfFertilization, timeOfInjection, groupMap);
         }
         else {
             System.out.println("Creating");
-            experiment = new Experiment(experimentNameField.getText().trim(), confocalDirectory, timeOfFertilization, timeOfInjection, null);
+            experiment = new ExperimentNew(experimentNameField.getText().trim(), confocalDirectory, timeOfFertilization, timeOfInjection, null);
         }
         System.out.println("Created");
         dispose();
@@ -290,7 +291,7 @@ public class NewExperimentGUI extends javax.swing.JDialog {
         else createdWellLayoutField.setText("Selected");
     }//GEN-LAST:event_createWellLayoutButtonActionPerformed
 
-    public Experiment getExperiment() {
+    public ExperimentNew getExperiment() {
         return experiment;
     }
     /**

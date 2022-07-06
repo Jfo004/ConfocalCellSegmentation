@@ -7,10 +7,15 @@ package tools;
 
 import experiments.Constants;
 import experiments.Experiment;
+import experiments.ExperimentNew;
 import experiments.Fish;
 import experiments.FishGroup;
+import experiments.FishGroupNew;
+import experiments.FishNew;
 import experiments.ImageAnalysis;
+import experiments.ImageAnalysisNew;
 import experiments.Measurement;
+import experiments.MeasurementNew;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.WaitForUserDialog;
@@ -26,10 +31,10 @@ public class ContrastAdjuster implements Runnable{
         double channelIntensityMin;
         double[] compositeIntensitiesMax;
         double[] compositeIntensitiesMin;
-        Experiment experiment;
-        ImageAnalysis controllAnalysis;
+        ExperimentNew experiment;
+        ImageAnalysisNew controllAnalysis;
         
-    public ContrastAdjuster(Experiment experiment, ImageAnalysis controllAnalysis) {
+    public ContrastAdjuster(ExperimentNew experiment, ImageAnalysisNew controllAnalysis) {
         this.experiment = experiment;
         this.controllAnalysis = controllAnalysis;
 
@@ -51,10 +56,10 @@ public class ContrastAdjuster implements Runnable{
             channelIntensityMax = controllImage.getDisplayRangeMax();
             channelIntensityMin = controllImage.getDisplayRangeMin();
             controllImage.close();
-            for (FishGroup group : experiment.getGroups()) {
-                for (Fish fish : group.getFishList()) {
-                    for (Measurement measurement : fish.getMeasurements()) {
-                        for (ImageAnalysis analysis : measurement.getAnalyses()) {
+            for (FishGroupNew group : experiment.getGroups()) {
+                for (FishNew fish : group.getFishList()) {
+                    for (MeasurementNew measurement : fish.getMeasurements()) {
+                        for (ImageAnalysisNew analysis : measurement.getAnalysisList()) {
                             if (!analysis.isAnalysisType(Constants.ANALYSIS_FLATTENED)) {
                                 System.out.println("Skipped analysis: " + analysis.getAnalysisName());
                                 continue;
@@ -88,10 +93,10 @@ public class ContrastAdjuster implements Runnable{
             compositeIntensitiesMin[i-1] = controllImage.getDisplayRangeMin();
         }
         controllImage.close();
-        for (FishGroup group : experiment.getGroups()) {
-            for (Fish fish : group.getFishList()) {
-                for (Measurement measurement : fish.getMeasurements()) {
-                    for (ImageAnalysis analysis : measurement.getAnalyses()) {
+        for (FishGroupNew group : experiment.getGroups()) {
+            for (FishNew fish : group.getFishList()) {
+                for (MeasurementNew measurement : fish.getMeasurements()) {
+                    for (ImageAnalysisNew analysis : measurement.getAnalysisList()) {
                         if (!analysis.isAnalysisType(Constants.ANALYSIS_FLATTENED)) {
                             System.out.println("Skipped analysis(Comp): " + analysis.getAnalysisName());
                             continue;

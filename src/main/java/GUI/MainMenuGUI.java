@@ -32,7 +32,9 @@ import tools.CellAnalysator;
 import tools.CellFinder;
 import tools.ContrastAdjuster;
 import tools.Cropper;
-import tools.ExperimentExporter;
+import tools.ExperimentExporterXML;
+import tools.ExperimentImporter;
+import tools.ExperimentXMLConverter;
 import tools.MontageCreator;
 import tools.OptiFlattener;
 
@@ -41,7 +43,7 @@ import tools.OptiFlattener;
  * @author janlu
  */
 public class MainMenuGUI extends javax.swing.JFrame {
-    private Experiment experiment;
+    private ExperimentNew experiment;
     private OptiFlattener flattener;
     private int ongoingOperation = 0;
     private Thread workThread;
@@ -75,6 +77,7 @@ public class MainMenuGUI extends javax.swing.JFrame {
         confocalCountField = new javax.swing.JLabel();
         newExperimentButton = new javax.swing.JButton();
         openExperimentButton = new javax.swing.JButton();
+        convertButton = new javax.swing.JButton();
         actionPanel = new javax.swing.JPanel();
         refreshButton = new javax.swing.JButton();
         flattenImagesButton = new javax.swing.JButton();
@@ -86,7 +89,6 @@ public class MainMenuGUI extends javax.swing.JFrame {
         analyzeCellsButton = new javax.swing.JButton();
         cellChannelSpinner = new javax.swing.JSpinner();
         jLabel5 = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         experimentTree = new javax.swing.JTree();
         progressBar = new javax.swing.JProgressBar();
@@ -143,6 +145,13 @@ public class MainMenuGUI extends javax.swing.JFrame {
             }
         });
 
+        convertButton.setText("Convert .exp");
+        convertButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                convertButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout experimentInformationPanelLayout = new javax.swing.GroupLayout(experimentInformationPanel);
         experimentInformationPanel.setLayout(experimentInformationPanelLayout);
         experimentInformationPanelLayout.setHorizontalGroup(
@@ -168,7 +177,8 @@ public class MainMenuGUI extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 230, Short.MAX_VALUE)
                 .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(newExperimentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(openExperimentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(openExperimentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(convertButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         experimentInformationPanelLayout.setVerticalGroup(
@@ -200,7 +210,9 @@ public class MainMenuGUI extends javax.swing.JFrame {
                         .addContainerGap()
                         .addComponent(newExperimentButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(openExperimentButton)))
+                        .addComponent(openExperimentButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(convertButton)))
                 .addContainerGap(7, Short.MAX_VALUE))
         );
 
@@ -275,13 +287,6 @@ public class MainMenuGUI extends javax.swing.JFrame {
 
         jLabel5.setText("Cell channel:");
 
-        jButton1.setText("jButton1");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout actionPanelLayout = new javax.swing.GroupLayout(actionPanel);
         actionPanel.setLayout(actionPanelLayout);
         actionPanelLayout.setHorizontalGroup(
@@ -295,15 +300,12 @@ public class MainMenuGUI extends javax.swing.JFrame {
                     .addComponent(flattenImagesButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(traceFishButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(actionPanelLayout.createSequentialGroup()
-                        .addGroup(actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(SegmentCellsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 144, Short.MAX_VALUE)
-                            .addComponent(countCellsButton)
-                            .addComponent(analyzeCellsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel5))
-                    .addComponent(jButton1))
+                .addGroup(actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(SegmentCellsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 144, Short.MAX_VALUE)
+                    .addComponent(countCellsButton)
+                    .addComponent(analyzeCellsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cellChannelSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(54, Short.MAX_VALUE))
@@ -325,15 +327,10 @@ public class MainMenuGUI extends javax.swing.JFrame {
                 .addGroup(actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(analyzeCellsButton)
                     .addComponent(traceFishButton))
-                .addGroup(actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(actionPanelLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(adjustContrastButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(makeMontageButton))
-                    .addGroup(actionPanelLayout.createSequentialGroup()
-                        .addGap(19, 19, 19)
-                        .addComponent(jButton1)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(adjustContrastButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(makeMontageButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -479,7 +476,7 @@ public class MainMenuGUI extends javax.swing.JFrame {
         NewExperimentGUI newExperiment = new NewExperimentGUI(this, true);
         newExperiment.setLocationRelativeTo(this);
         newExperiment.setVisible(true);
-        Experiment tempExperiment = newExperiment.getExperiment();
+        ExperimentNew tempExperiment = newExperiment.getExperiment();
         if (tempExperiment == null ) return;
         this.experiment = tempExperiment;
         updateExperiment();
@@ -498,19 +495,22 @@ public class MainMenuGUI extends javax.swing.JFrame {
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         int returnVal = fileChooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            try {
-                FileInputStream fileInStream = new FileInputStream(fileChooser.getSelectedFile());
-                ObjectInputStream objectInStream = new ObjectInputStream(fileInStream);
-                experiment = (Experiment) objectInStream.readObject();
-                objectInStream.close();
-                fileInStream.close();
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(MainMenuGUI.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IOException ex) {
-                Logger.getLogger(MainMenuGUI.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(MainMenuGUI.class.getName()).log(Level.SEVERE, null, ex);
-            }
+//            try {
+//                FileInputStream fileInStream = new FileInputStream(fileChooser.getSelectedFile());
+//                ObjectInputStream objectInStream = new ObjectInputStream(fileInStream);
+//                experiment = (Experiment) objectInStream.readObject();
+//                objectInStream.close();
+//                fileInStream.close();
+//            } catch (FileNotFoundException ex) {
+//                Logger.getLogger(MainMenuGUI.class.getName()).log(Level.SEVERE, null, ex);
+//            } catch (IOException ex) {
+//                Logger.getLogger(MainMenuGUI.class.getName()).log(Level.SEVERE, null, ex);
+//            } catch (ClassNotFoundException ex) {
+//                Logger.getLogger(MainMenuGUI.class.getName()).log(Level.SEVERE, null, ex);
+//            }
+
+            ExperimentImporter importer = new ExperimentImporter(fileChooser.getSelectedFile());
+            experiment = importer.importExperiment();
             updateExperiment();
             flattenImagesButton.setEnabled(true);
             adjustContrastButton.setEnabled(true);
@@ -542,42 +542,46 @@ public class MainMenuGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_abortButtonActionPerformed
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
-        ExperimentNew newExperiment = new ExperimentNew(experiment.getName(), experiment.getConfocalDirectory(), experiment.getTimeOfFertilization(), experiment.getTimeOfInjection());
-        newExperiment.setFishCount(experiment.getFishCount());
-        newExperiment.setGroupCount(experiment.getGroupCount());
-        newExperiment.setImageCount(experiment.getImageCount());
-        ArrayList<FishGroupNew> newGroups = new ArrayList();
-        for(FishGroup group : experiment.getGroups()) {
-            FishGroupNew newGroup = new FishGroupNew(group.getGroupName());
-            newGroup.setParent(newExperiment);
-            ArrayList<FishNew> newFishList = new ArrayList();            
-                    
-            for(Fish fish : group.getFishList()) {
-                FishNew newFish = new FishNew(fish.getName(), newGroup);
-                ArrayList<MeasurementNew> newMeasurementList= new ArrayList();
-                
-                for(Measurement measurement : fish.getMeasurements()) {
-                    MeasurementNew newMeasurement = new MeasurementNew(measurement.getConfocalFile(), newFish);
-                    newMeasurement.setFishROI(measurement.getFishROI());
-                    ArrayList<ImageAnalysisNew> newAnalysisList = new ArrayList();
-                    
-                    for(ImageAnalysis analysis : measurement.getAnalyses()){
-                        ImageAnalysisNew newAnalysis = new ImageAnalysisNew(analysis.getAnalysisType(), analysis.getAnalysisFiles(), analysis.getChannelIDs(), analysis.getAnalysisTime(), newMeasurement);
-                        newAnalysisList.add(newAnalysis);
-                    }
-                    newMeasurement.setAnalyses(newAnalysisList);
-                    newMeasurementList.add(newMeasurement);
-                }
-                newFish.setMeasurements(newMeasurementList);
-                newFishList.add(newFish);
-            }
-            newGroup.setFishList(newFishList);
-            newGroups.add(newGroup);
-        }
-        newExperiment.setGroups(newGroups);
+//        ExperimentNew newExperiment = new ExperimentNew(experiment.getName(), experiment.getConfocalDirectory(), experiment.getTimeOfFertilization(), experiment.getTimeOfInjection());
+//        newExperiment.setFishCount(experiment.getFishCount());
+//        newExperiment.setGroupCount(experiment.getGroupCount());
+//        newExperiment.setImageCount(experiment.getImageCount());
+//        ArrayList<FishGroupNew> newGroups = new ArrayList();
+//        for(FishGroup group : experiment.getGroups()) {
+//            FishGroupNew newGroup = new FishGroupNew(group.getGroupName());
+//            newGroup.setParent(newExperiment);
+//            ArrayList<FishNew> newFishList = new ArrayList();            
+//                    
+//            for(Fish fish : group.getFishList()) {
+//                FishNew newFish = new FishNew(fish.getName(), newGroup);
+//                ArrayList<MeasurementNew> newMeasurementList= new ArrayList();
+//                
+//                for(Measurement measurement : fish.getMeasurements()) {
+//                    MeasurementNew newMeasurement = new MeasurementNew(measurement.getConfocalFile(), newFish);
+//                    newMeasurement.setFishROI(measurement.getFishROI());
+//                    ArrayList<ImageAnalysisNew> newAnalysisList = new ArrayList();
+//                    
+//                    for(ImageAnalysis analysis : measurement.getAnalyses()){
+//                        ImageAnalysisNew newAnalysis = new ImageAnalysisNew(analysis.getAnalysisType(), analysis.getAnalysisFiles(), analysis.getChannelIDs(), analysis.getAnalysisTime(), newMeasurement);
+//                        newAnalysisList.add(newAnalysis);
+//                    }
+//                    newMeasurement.setAnalyses(newAnalysisList);
+//                    newMeasurementList.add(newMeasurement);
+//                }
+//                newFish.setMeasurements(newMeasurementList);
+//                newFishList.add(newFish);
+//            }
+//            newGroup.setFishList(newFishList);
+//            newGroups.add(newGroup);
+//        }
+//        newExperiment.setGroups(newGroups);
+
         
-        ExperimentExporter.exportExperiment(newExperiment);
-        //saveExperiment();
+//        ExperimentXMLConverter converter = new ExperimentXMLConverter(experiment);
+//        ExperimentNew newExperiment = converter.convert();
+//        ExperimentExporterXML.exportExperiment(newExperiment);
+        
+        saveExperiment();
         
     }//GEN-LAST:event_saveButtonActionPerformed
 
@@ -585,7 +589,7 @@ public class MainMenuGUI extends javax.swing.JFrame {
         AdjustChannelsGUI contrastGUI = new AdjustChannelsGUI(this, true, experiment);
         contrastGUI.setLocationRelativeTo(this);
         contrastGUI.setVisible(true);
-        ImageAnalysis controllAnalysis = contrastGUI.getAnalysis();
+        ImageAnalysisNew controllAnalysis = contrastGUI.getAnalysis();
         if (controllAnalysis == null ) return;
         ContrastAdjuster contrastAdjust = new ContrastAdjuster(experiment, controllAnalysis);
         workThread = new Thread(contrastAdjust);
@@ -624,11 +628,11 @@ public class MainMenuGUI extends javax.swing.JFrame {
         cellAnalysisGUI.setVisible(true);
     }//GEN-LAST:event_analyzeCellsButtonActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        Segmentation segmentation = new Segmentation();
-        segmentation.setLocationRelativeTo(this);
-        segmentation.setVisible(true);
-    }//GEN-LAST:event_jButton1ActionPerformed
+    private void convertButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_convertButtonActionPerformed
+        ExperimentXMLConverter converter = new ExperimentXMLConverter();
+        ExperimentExporterXML.exportExperiment(converter.convert());
+        
+    }//GEN-LAST:event_convertButtonActionPerformed
 
     private void refreshExperimentTree() {
         
@@ -638,40 +642,40 @@ public class MainMenuGUI extends javax.swing.JFrame {
             return;
         }
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("Experiment: " + experiment.getName());
-        if (experiment.isUsesGroups()) {
-            ArrayList<FishGroup> groupList = experiment.getGroups();
-            for (FishGroup fishGroup : groupList) {
-                DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode("Group: " + fishGroup.getGroupName());
-                ArrayList<Fish> fishList = fishGroup.getFishList();
-                for (Fish fish : fishList) {
-                    DefaultMutableTreeNode fishNode = new DefaultMutableTreeNode("Fish: " + fish.getName());
-                    ArrayList<Measurement> measurementList = fish.getMeasurements();
-                    for (Measurement measurement : measurementList) {
-                        DefaultMutableTreeNode measurementNode = new DefaultMutableTreeNode("Measurement: " + measurement.getFileName());
-                        ArrayList<ImageAnalysis> analysisList = measurement.getAnalyses();
-                        for (ImageAnalysis analysis : analysisList) {
-                            DefaultMutableTreeNode analysisNode = new DefaultMutableTreeNode("Analysis: " + analysis.getAnalysisName());
-                            measurementNode.add(analysisNode);
-                        }
-                        fishNode.add(measurementNode);
+        
+        ArrayList<FishGroupNew> groupList = experiment.getGroups();
+        for (FishGroupNew fishGroup : groupList) {
+            DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode("Group: " + fishGroup.getGroupName());
+            ArrayList<FishNew> fishList = fishGroup.getFishList();
+            for (FishNew fish : fishList) {
+                DefaultMutableTreeNode fishNode = new DefaultMutableTreeNode("Fish: " + fish.getName());
+                ArrayList<MeasurementNew> measurementList = fish.getMeasurements();
+                for (MeasurementNew measurement : measurementList) {
+                    DefaultMutableTreeNode measurementNode = new DefaultMutableTreeNode("Measurement: " + measurement.getFileName());
+                    ArrayList<ImageAnalysisNew> analysisList = measurement.getAnalysisList();
+                    for (ImageAnalysisNew analysis : analysisList) {
+                        DefaultMutableTreeNode analysisNode = new DefaultMutableTreeNode("Analysis: " + analysis.getAnalysisName());
+                        measurementNode.add(analysisNode);
                     }
-                    groupNode.add(fishNode);
+                    fishNode.add(measurementNode);
                 }
-                root.add(groupNode);
-            } 
-        }
-        else {
-            String[] fishList = experiment.getFishNames();
-            for (String fishName : fishList) {
-                DefaultMutableTreeNode fish = new DefaultMutableTreeNode("Fish: " + fishName);
-                String[] acquisitionList = experiment.getFish(fishName).getMeasurementNames();
-                for (String acquisitionName : acquisitionList) {
-                    DefaultMutableTreeNode measurement = new DefaultMutableTreeNode("Measurement: " + acquisitionName);
-                    fish.add(measurement);
-                }
-                root.add(fish);
-            }  
-        }
+                groupNode.add(fishNode);
+            }
+            root.add(groupNode);
+        } 
+        
+//        else {
+//            String[] fishList = experiment.getFishNames();
+//            for (String fishName : fishList) {
+//                DefaultMutableTreeNode fish = new DefaultMutableTreeNode("Fish: " + fishName);
+//                String[] acquisitionList = experiment.getFish(fishName).getMeasurementNames();
+//                for (String acquisitionName : acquisitionList) {
+//                    DefaultMutableTreeNode measurement = new DefaultMutableTreeNode("Measurement: " + acquisitionName);
+//                    fish.add(measurement);
+//                }
+//                root.add(fish);
+//            }  
+//        }
         experimentTree.setModel(new DefaultTreeModel(root));
     }
     
@@ -777,6 +781,7 @@ public class MainMenuGUI extends javax.swing.JFrame {
     private javax.swing.JSpinner cellChannelSpinner;
     private javax.swing.JLabel confocalCountField;
     private javax.swing.JLabel confocalCountLabel;
+    private javax.swing.JButton convertButton;
     private javax.swing.JButton countCellsButton;
     private javax.swing.JPanel experimentInformationPanel;
     private javax.swing.JTree experimentTree;
@@ -789,7 +794,6 @@ public class MainMenuGUI extends javax.swing.JFrame {
     private javax.swing.JLabel groupCountLabel;
     private javax.swing.JLabel injectionDateField;
     private javax.swing.JLabel injectionDateLabel;
-    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

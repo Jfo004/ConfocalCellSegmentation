@@ -6,6 +6,7 @@
 package tools;
 
 import experiments.Experiment;
+import experiments.ExperimentNew;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -18,9 +19,9 @@ import util.opencsv.CSVWriter;
  */
 public class CellExporter {
     ArrayList<CellGroup> cellGroups;
-    Experiment experiment;
+    ExperimentNew experiment;
     
-    public CellExporter(ArrayList<CellGroup> cellGroups, Experiment experiment) {
+    public CellExporter(ArrayList<CellGroup> cellGroups, ExperimentNew experiment) {
         this.cellGroups = cellGroups;
         this.experiment = experiment;
     }
@@ -30,7 +31,7 @@ public class CellExporter {
         try {
             FileWriter outputFile = new FileWriter(file);
             CSVWriter writer = new CSVWriter(outputFile);
-            String[] header = {"Group", "Fish", "Time", "Cell ID", "Position X", "Position Y", "Position Z", "Volume Pixels", "Volume Unit", "Average Intensity"};
+            String[] header = {"Group", "Fish", "Time", "Cell.ID", "Position.X", "Position.Y", "Position.Z", "Volume.Pixels", "Volume.Unit", "Average.Intensity"};
             writer.writeNext(header);
             
             for (CellGroup group : cellGroups) {

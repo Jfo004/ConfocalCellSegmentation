@@ -19,7 +19,7 @@ import javax.xml.bind.annotation.XmlTransient;
  *
  * @author janlu
  */
-@XmlRootElement
+@XmlRootElement(name = "Group")
 public class FishGroupNew implements Serializable{
     private String groupName;
     private ArrayList<FishNew> fishList = new ArrayList();
@@ -40,7 +40,7 @@ public class FishGroupNew implements Serializable{
         this.parent = parent;
     }
     
-    @XmlAttribute(name = "Name")
+    @XmlAttribute(name = "Group_ID")
     public String getGroupName() {
         return groupName;
     }
@@ -48,7 +48,7 @@ public class FishGroupNew implements Serializable{
         this.groupName = groupName.toUpperCase();
     }
     
-    @XmlElement
+    @XmlElement(name = "Subject")
     public ArrayList<FishNew> getFishList() {
         return fishList;
     }
@@ -99,6 +99,19 @@ public class FishGroupNew implements Serializable{
 
     public Iterable<FishNew> getFish() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    void updateParents(ExperimentNew parent) {
+        this.parent = parent;
+        for(FishNew subject : fishList) {
+            subject.updateParents(this);
+        }
+    }
+
+    void updateFile(File experimentPath) {
+        for(FishNew subject : fishList) {
+            subject.updateFile(experimentPath);
+        }
     }
 
 

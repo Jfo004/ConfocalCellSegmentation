@@ -90,7 +90,7 @@ public class CellImporter implements Runnable{
                                 double positionX = object.getCenterX();
                                 double positionY = object.getCenterY();
                                 double positionZ = object.getCenterZ();
-                                
+                                 
                                 cellDay.addCell(new Cell(volumePix, volumeUnit, averageIntensity, objectNumber, positionX, positionY, positionZ));
                             }
                             

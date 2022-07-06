@@ -5,6 +5,7 @@
 package GUI;
 
 import experiments.Measurement;
+import experiments.MeasurementNew;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
@@ -297,6 +298,10 @@ public class Segmentation extends javax.swing.JFrame {
     private void flipHButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flipHButtonActionPerformed
         wasFlippedH = !wasFlippedH;
         
+        bfImp.deleteRoi();
+        fluoImp.deleteRoi();
+        stackImp.deleteRoi();
+        
         bfImp.getProcessor().flipHorizontal();
         fluoImp.getProcessor().flipHorizontal();
         ImageStack stack = stackImp.getStack();
@@ -468,7 +473,7 @@ public class Segmentation extends javax.swing.JFrame {
         maskjList.setEnabled(true);
     }
     
-    public void setIamges(ImagePlus bfImp, ImagePlus fluoImp, ImagePlus stackImp, Measurement measurement) {
+    public void setIamges(ImagePlus bfImp, ImagePlus fluoImp, ImagePlus stackImp, MeasurementNew measurement) {
         this.bfImp = bfImp;
         this.fluoImp = fluoImp;
         this.stackImp = stackImp;

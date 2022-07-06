@@ -9,6 +9,7 @@ import java.util.HashMap;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.apache.commons.io.FilenameUtils;
 import tools.InstantAdapter;
@@ -23,16 +24,13 @@ import tools.InstantAdapter;
  *
  * @author janlu
  */
-@XmlRootElement
+@XmlRootElement(name = "Experiment")
 public class ExperimentNew implements Serializable{
     private String name = "None";
-    private boolean usesGroups = true;
     private File confocalDirectory;
     private ArrayList<FishGroupNew> groups = new ArrayList();
-    private ArrayList<FishNew> fishList = new ArrayList();
     private Instant timeOfFertilization;
     private Instant timeOfInjection;
-    private HashMap groupMap;
     private int groupCount = 0;
     private int fishCount = 0;
     private int imageCount = 0;
@@ -48,74 +46,41 @@ public class ExperimentNew implements Serializable{
     public ExperimentNew() {
         
     }
-    public ExperimentNew(String name, File confocalDirectory, Instant timeOfFertilization, Instant timeOfInjection) {
-        this(name, confocalDirectory, timeOfFertilization, timeOfInjection, null);    
-    }
     public ExperimentNew(String name, File confocalDirectory, Instant timeOfFertilization, Instant timeOfInjection, HashMap groupMap) {
         this.name = name;
         this.confocalDirectory = confocalDirectory;
         this.timeOfFertilization = timeOfFertilization;
         this.timeOfInjection = timeOfInjection;
         
-        //Make individual groups
-        if (groupMap == null) {
-            usesGroups = false;
-            for (File file : confocalDirectory.listFiles()){
-                boolean placedFile = false;
-                if (FilenameUtils.isExtension(file.getName(), "ims")){
-                    String tempFishName = file.getName().substring(0, file.getName().indexOf("_")).toUpperCase();
-                    for (FishGroupNew checkGroup : groups) {
-                        if (checkGroup.hasName(tempFishName)) {
-                            checkGroup.addFish(file, tempFishName);
-                            placedFile = true;
-                        }
+        for (File file : confocalDirectory.listFiles()){
+            boolean placedFile = false;
+            if (FilenameUtils.isExtension(file.getName(), "ims")){
+                String tempGroupName;
+                String tempFishName = (String)groupMap.get(file.getName().substring(0, file.getName().indexOf("_")).toUpperCase());
+                if (tempFishName == null) tempFishName = file.getName().substring(0, file.getName().indexOf("_")).toUpperCase();
+                if (tempFishName.contains("(")) tempGroupName = tempFishName.substring(0, tempFishName.indexOf("("));
+                else tempGroupName = "None";
+
+                for (FishGroupNew checkGroup : groups) {
+                    if (checkGroup.hasName(tempGroupName)) {
+                        checkGroup.addFish(file, tempFishName);
+                        placedFile = true;
                     }
-                    if (!placedFile) {
-                        groups.add(new FishGroupNew(tempFishName, file, tempFishName));
-                    }
-                    imageCount++;
-               }
-            }
-        }
-        else {
-            usesGroups = true;
-            for (File file : confocalDirectory.listFiles()){
-                boolean placedFile = false;
-                if (FilenameUtils.isExtension(file.getName(), "ims")){
-                    String tempGroupName;
-                    String tempFishName = (String)groupMap.get(file.getName().substring(0, file.getName().indexOf("_")).toUpperCase());
-                    if (tempFishName == null) tempFishName = file.getName().substring(0, file.getName().indexOf("_")).toUpperCase();
-                    if (tempFishName.contains("(")) tempGroupName = tempFishName.substring(0, tempFishName.indexOf("("));
-                    else tempGroupName = "None";
-                    
-                    for (FishGroupNew checkGroup : groups) {
-                        if (checkGroup.hasName(tempGroupName)) {
-                            checkGroup.addFish(file, tempFishName);
-                            placedFile = true;
-                        }
-                    }
-                    if (!placedFile) {
-                        groups.add(new FishGroupNew(tempGroupName, file, tempFishName, this));
-                    }
-                    imageCount++;
                 }
+                if (!placedFile) {
+                    groups.add(new FishGroupNew(tempGroupName, file, tempFishName, this));
+                }
+                imageCount++;
             }
         }
-        if (usesGroups) {
-            fishCount = 0;
-            for (FishGroupNew group : groups) {
-                fishCount += group.getFishCount();
-                groupCount = groups.size();
-            }
-        }
-        else {
-            fishCount = fishList.size();
+        for (FishGroupNew group : groups) {
+            fishCount += group.getFishCount();
             groupCount = groups.size();
         }
     }
     
     
-    @XmlAttribute
+    @XmlAttribute(name = "Name")
     public String getName() {
         return name;
     }
@@ -123,7 +88,7 @@ public class ExperimentNew implements Serializable{
         this.name = name;
     }
     
-    @XmlAttribute
+    @XmlTransient
     public File getConfocalDirectory() {
         return confocalDirectory;
     }
@@ -132,6 +97,7 @@ public class ExperimentNew implements Serializable{
     }
     
     @XmlJavaTypeAdapter(InstantAdapter.class)
+    @XmlAttribute(name = "Time_fertilization")
     public Instant getTimeOfFertilization() {
         return timeOfFertilization;
     }
@@ -140,6 +106,7 @@ public class ExperimentNew implements Serializable{
     }
     
     @XmlJavaTypeAdapter(InstantAdapter.class)
+    @XmlAttribute(name = "Time_transplant")
     public Instant getTimeOfInjection() {
         return timeOfInjection;
     }
@@ -147,7 +114,7 @@ public class ExperimentNew implements Serializable{
         this.timeOfInjection = timeOfInjection;
     }
     
-    @XmlAttribute
+    @XmlAttribute(name = "Group_count")
     public int getGroupCount() {
         return groupCount;
     }
@@ -155,7 +122,7 @@ public class ExperimentNew implements Serializable{
         this.groupCount = groupCount;
     }
     
-    @XmlAttribute
+    @XmlAttribute(name = "Subject_count")
     public int getFishCount() {
         return fishCount;
     }
@@ -163,21 +130,13 @@ public class ExperimentNew implements Serializable{
         this.fishCount = fishCount;
     }
     
-    @XmlAttribute
+    @XmlAttribute(name = "Image_count")
     public int getImageCount() {
         return imageCount;
     }
     public void setImageCount(int imageCount) {
         this.imageCount = imageCount;
-    }
-
-    @XmlAttribute
-    public boolean isUsesGroups() {
-        return usesGroups;
-    }
-    public void setUsesGroups(boolean usesGroups) {
-        this.usesGroups = usesGroups;
-    }
+    }    
     
     @XmlElement(name = "Group")
     public ArrayList<FishGroupNew> getGroups() {
@@ -201,19 +160,19 @@ public class ExperimentNew implements Serializable{
         return null;        
     }
 
-    public String[] getFishNames() {
-        String[] fishNameArray = new String[fishList.size()];
-        for (int i = 0; i < fishList.size(); i++) {
-            fishNameArray[i] = fishList.get(i).getName();
+    public void updateParent() {
+        for (FishGroupNew group : groups) {
+            group.updateParents(this);
         }
-        return fishNameArray;
     }
-    public FishNew getFish(String fishName) {
-        for (FishNew fish : fishList) {
-            if (fish.hasName(fishName)) return fish;
+
+    public void updateFile(File experimentPath) {
+        this.confocalDirectory = experimentPath;
+        for (FishGroupNew group : groups) {
+            group.updateFile(experimentPath);
         }
-        return null; 
     }
+
 
 
  

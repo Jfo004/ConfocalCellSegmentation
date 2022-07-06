@@ -6,6 +6,7 @@
 package GUI;
 
 import experiments.Experiment;
+import experiments.ExperimentNew;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.text.DecimalFormat;
@@ -45,6 +46,7 @@ import tools.Histogram;
 import tools.MarkerHolder;
 import tools.VolumeHistogramGenerator;
 import tools.CellExporter;
+import tools.CellImporterCSV;
 
 /**
  *
@@ -53,7 +55,7 @@ import tools.CellExporter;
 public class CellAnalysisGUI extends javax.swing.JDialog {
     private CellAnalysator cellAnalysator;
     private VolumeHistogramGenerator histogramGenerator;
-    private Experiment experiment;
+    private ExperimentNew experiment;
     private MainMenuGUI parent;
     private CellHolder cellHolder;
     ChartPanel chartPanel;
@@ -74,7 +76,7 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
     /**
      * Creates new form CellAnalysisGUI
      */
-    public CellAnalysisGUI(java.awt.Frame parent, boolean modal, Experiment experiment) {
+    public CellAnalysisGUI(java.awt.Frame parent, boolean modal, ExperimentNew experiment) {
         super(parent, modal);
         this.parent = (MainMenuGUI) parent;
         this.experiment = experiment;
@@ -130,10 +132,7 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
         markerJListCellCount = new javax.swing.JList<>();
         cellCountChartPanel = new javax.swing.JPanel();
         cellCountDrawGraphButton = new javax.swing.JToggleButton();
-        jPanel3 = new javax.swing.JPanel();
-        exportPanel = new javax.swing.JPanel();
         exportCellCountButton = new javax.swing.JButton();
-        exportCellPosButton = new javax.swing.JButton();
         loadingBar = new javax.swing.JProgressBar();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -386,9 +385,8 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
                 .addGap(44, 44, 44)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(maxSliderX, javax.swing.GroupLayout.DEFAULT_SIZE, 1077, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addComponent(minSliderX, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 1077, Short.MAX_VALUE)
-                        .addComponent(histogramChartPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(minSliderX, javax.swing.GroupLayout.DEFAULT_SIZE, 1077, Short.MAX_VALUE)
+                    .addComponent(histogramChartPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(0, 0, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -483,6 +481,13 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
             }
         });
 
+        exportCellCountButton.setText("Export CellCount");
+        exportCellCountButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exportCellCountButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -492,10 +497,13 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 285, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cellCountDrawGraphButton)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 54, Short.MAX_VALUE)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cellCountDrawGraphButton))
+                            .addComponent(exportCellCountButton))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 61, Short.MAX_VALUE)
                 .addComponent(cellCountChartPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -510,65 +518,13 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
                         .addGap(18, 18, 18)
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(cellCountDrawGraphButton))))
+                            .addComponent(cellCountDrawGraphButton))
+                        .addGap(18, 18, 18)
+                        .addComponent(exportCellCountButton)))
                 .addContainerGap(40, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Cell count", jPanel2);
-
-        javax.swing.GroupLayout exportPanelLayout = new javax.swing.GroupLayout(exportPanel);
-        exportPanel.setLayout(exportPanelLayout);
-        exportPanelLayout.setHorizontalGroup(
-            exportPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1170, Short.MAX_VALUE)
-        );
-        exportPanelLayout.setVerticalGroup(
-            exportPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 700, Short.MAX_VALUE)
-        );
-
-        exportCellCountButton.setText("Export CellCount");
-        exportCellCountButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                exportCellCountButtonActionPerformed(evt);
-            }
-        });
-
-        exportCellPosButton.setText("Export CellPos");
-        exportCellPosButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                exportCellPosButtonActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(95, 95, 95)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(exportCellCountButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(exportCellPosButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(263, 263, 263)
-                .addComponent(exportPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(exportPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(13, 13, 13))
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(120, 120, 120)
-                .addComponent(exportCellCountButton)
-                .addGap(18, 18, 18)
-                .addComponent(exportCellPosButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        jTabbedPane1.addTab("Export", jPanel3);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -603,98 +559,40 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void maxDisplayVolumeFieldPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_maxDisplayVolumeFieldPropertyChange
-        // TODO add your handling code here:
-    }//GEN-LAST:event_maxDisplayVolumeFieldPropertyChange
-
-    private void nBinsFieldPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_nBinsFieldPropertyChange
-        // TODO add your handling code here:
-    }//GEN-LAST:event_nBinsFieldPropertyChange
-
-    private void nBinsFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nBinsFieldActionPerformed
-        updateNBins();
-    }//GEN-LAST:event_nBinsFieldActionPerformed
-
-    private void minDisplayVolumeFieldPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_minDisplayVolumeFieldPropertyChange
-        //System.out.println("Changed to " + minDisplayVolumeField.getText());
-    }//GEN-LAST:event_minDisplayVolumeFieldPropertyChange
-
-    private void minDisplayVolumeFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_minDisplayVolumeFieldKeyPressed
-        //if (!evt.) return;
-        //System.out.println("Changed to " + minDisplayVolumeField.getText());
-    }//GEN-LAST:event_minDisplayVolumeFieldKeyPressed
-
-    private void minDisplayVolumeFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_minDisplayVolumeFieldActionPerformed
-        updateDisplayRange();
-    }//GEN-LAST:event_minDisplayVolumeFieldActionPerformed
-
-    private void minDisplayVolumeFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_minDisplayVolumeFieldFocusLost
-        updateDisplayRange();
-    }//GEN-LAST:event_minDisplayVolumeFieldFocusLost
-
-    private void maxDisplayVolumeFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_maxDisplayVolumeFieldActionPerformed
-        updateDisplayRange();
-    }//GEN-LAST:event_maxDisplayVolumeFieldActionPerformed
-
-    private void maxDisplayVolumeFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_maxDisplayVolumeFieldFocusLost
-        updateDisplayRange();
-    }//GEN-LAST:event_maxDisplayVolumeFieldFocusLost
-
-    private void nBinsFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_nBinsFieldFocusLost
-        updateNBins();
-    }//GEN-LAST:event_nBinsFieldFocusLost
-
-    private void minThresholdFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_minThresholdFieldActionPerformed
-        updateCutoff();
-    }//GEN-LAST:event_minThresholdFieldActionPerformed
-
-    private void minThresholdFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_minThresholdFieldFocusLost
-        updateCutoff();
-    }//GEN-LAST:event_minThresholdFieldFocusLost
-
-    private void maxThresholdFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_maxThresholdFieldActionPerformed
-        updateCutoff();
-    }//GEN-LAST:event_maxThresholdFieldActionPerformed
-
-    private void maxThresholdFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_maxThresholdFieldFocusLost
-        updateCutoff();
-    }//GEN-LAST:event_maxThresholdFieldFocusLost
-
-    private void logScaleCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logScaleCheckBoxActionPerformed
-        toggleLogScale();
-    }//GEN-LAST:event_logScaleCheckBoxActionPerformed
-
     private void windowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_windowOpened
         loadCells();
     }//GEN-LAST:event_windowOpened
 
-    private void setTreeSelectionButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setTreeSelectionButtonActionPerformed
-        setSelection();
-    }//GEN-LAST:event_setTreeSelectionButtonActionPerformed
+    private void jTabbedPane1PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1PropertyChange
 
-    private void minSliderXMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_minSliderXMouseDragged
-        updateMarker();
-    }//GEN-LAST:event_minSliderXMouseDragged
+    }//GEN-LAST:event_jTabbedPane1PropertyChange
+
+    private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
+
+    }//GEN-LAST:event_jTabbedPane1StateChanged
+
+    private void exportCellCountButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportCellCountButtonActionPerformed
+        ArrayList<IntervalMarker> markers = new ArrayList();
+        for (MarkerHolder holder : markerArrayList) markers.add(holder.getMarker());
+        CellExporter exporter = new CellExporter(cellHolder.getGroupList(), experiment);
+        exporter.run();
+    }//GEN-LAST:event_exportCellCountButtonActionPerformed
+
+    private void cellCountDrawGraphButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cellCountDrawGraphButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cellCountDrawGraphButtonActionPerformed
+
+    private void jPanel1PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jPanel1PropertyChange
+
+    }//GEN-LAST:event_jPanel1PropertyChange
 
     private void maxSliderXMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_maxSliderXMouseDragged
         updateMarker();
     }//GEN-LAST:event_maxSliderXMouseDragged
 
-    private void addMarkerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addMarkerButtonActionPerformed
-        if (StringUtils.isBlank(markerLabelField.getText())) {
-            markerLabelLabel.setForeground(Color.red);
-            return;
-        }
-        if (dynamicMarker == null) return;
-        
-        markerLabelLabel.setForeground(Color.black);
-        volumePlot.getXYPlot().removeDomainMarker(dynamicMarker);
-        IntervalMarker tempMarker = new IntervalMarker(dynamicMarker.getStartValue(), dynamicMarker.getEndValue());
-        tempMarker.setLabel(markerLabelField.getText().trim());
-        markerArrayList.add(new MarkerHolder(markerLabelField.getText().trim(), tempMarker));
-        updateMarkersJList();       
-        
-    }//GEN-LAST:event_addMarkerButtonActionPerformed
+    private void minSliderXMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_minSliderXMouseDragged
+        updateMarker();
+    }//GEN-LAST:event_minSliderXMouseDragged
 
     private void removeMarkerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeMarkerButtonActionPerformed
         if (markerJList.getSelectedIndices().length == 0) return;
@@ -704,8 +602,24 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
             markerArrayList.remove(idx);
             updateMarkersJList();
         }
-        
+
     }//GEN-LAST:event_removeMarkerButtonActionPerformed
+
+    private void addMarkerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addMarkerButtonActionPerformed
+        if (StringUtils.isBlank(markerLabelField.getText())) {
+            markerLabelLabel.setForeground(Color.red);
+            return;
+        }
+        if (dynamicMarker == null) return;
+
+        markerLabelLabel.setForeground(Color.black);
+        volumePlot.getXYPlot().removeDomainMarker(dynamicMarker);
+        IntervalMarker tempMarker = new IntervalMarker(dynamicMarker.getStartValue(), dynamicMarker.getEndValue());
+        tempMarker.setLabel(markerLabelField.getText().trim());
+        markerArrayList.add(new MarkerHolder(markerLabelField.getText().trim(), tempMarker));
+        updateMarkersJList();
+
+    }//GEN-LAST:event_addMarkerButtonActionPerformed
 
     private void markerJListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_markerJListValueChanged
         if (markerJList.getSelectedIndices().length == 0) return;
@@ -717,38 +631,73 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
     }//GEN-LAST:event_markerJListValueChanged
 
     private void cumulativeHistogramCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cumulativeHistogramCheckBoxActionPerformed
-       
+
     }//GEN-LAST:event_cumulativeHistogramCheckBoxActionPerformed
 
-    private void jPanel1PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jPanel1PropertyChange
+    private void setTreeSelectionButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setTreeSelectionButtonActionPerformed
+        setSelection();
+    }//GEN-LAST:event_setTreeSelectionButtonActionPerformed
 
-    }//GEN-LAST:event_jPanel1PropertyChange
+    private void logScaleCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logScaleCheckBoxActionPerformed
+        toggleLogScale();
+    }//GEN-LAST:event_logScaleCheckBoxActionPerformed
 
-    private void jTabbedPane1PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1PropertyChange
-        
-    }//GEN-LAST:event_jTabbedPane1PropertyChange
+    private void maxThresholdFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_maxThresholdFieldActionPerformed
+        updateCutoff();
+    }//GEN-LAST:event_maxThresholdFieldActionPerformed
 
-    private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
+    private void maxThresholdFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_maxThresholdFieldFocusLost
+        updateCutoff();
+    }//GEN-LAST:event_maxThresholdFieldFocusLost
 
-    }//GEN-LAST:event_jTabbedPane1StateChanged
+    private void minThresholdFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_minThresholdFieldActionPerformed
+        updateCutoff();
+    }//GEN-LAST:event_minThresholdFieldActionPerformed
 
-    private void cellCountDrawGraphButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cellCountDrawGraphButtonActionPerformed
+    private void minThresholdFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_minThresholdFieldFocusLost
+        updateCutoff();
+    }//GEN-LAST:event_minThresholdFieldFocusLost
+
+    private void nBinsFieldPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_nBinsFieldPropertyChange
         // TODO add your handling code here:
-    }//GEN-LAST:event_cellCountDrawGraphButtonActionPerformed
+    }//GEN-LAST:event_nBinsFieldPropertyChange
 
-    private void exportCellCountButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportCellCountButtonActionPerformed
-        ArrayList<IntervalMarker> markers = new ArrayList();
-        for (MarkerHolder holder : markerArrayList) markers.add(holder.getMarker());
-        CellExporter exporter = new CellExporter(cellHolder.getGroupList(), experiment);
-        exporter.run();
-    }//GEN-LAST:event_exportCellCountButtonActionPerformed
+    private void nBinsFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nBinsFieldActionPerformed
+        updateNBins();
+    }//GEN-LAST:event_nBinsFieldActionPerformed
 
-    private void exportCellPosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportCellPosButtonActionPerformed
-        ArrayList<IntervalMarker> markers = new ArrayList();
-        for (MarkerHolder holder : markerArrayList) markers.add(holder.getMarker());
-        CellPositionExporter exporter = new CellPositionExporter(cellHolder.getGroupList(), markers.toArray(new IntervalMarker[0]), experiment);
-        exporter.run();
-    }//GEN-LAST:event_exportCellPosButtonActionPerformed
+    private void nBinsFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_nBinsFieldFocusLost
+        updateNBins();
+    }//GEN-LAST:event_nBinsFieldFocusLost
+
+    private void maxDisplayVolumeFieldPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_maxDisplayVolumeFieldPropertyChange
+        // TODO add your handling code here:
+    }//GEN-LAST:event_maxDisplayVolumeFieldPropertyChange
+
+    private void maxDisplayVolumeFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_maxDisplayVolumeFieldActionPerformed
+        updateDisplayRange();
+    }//GEN-LAST:event_maxDisplayVolumeFieldActionPerformed
+
+    private void maxDisplayVolumeFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_maxDisplayVolumeFieldFocusLost
+        updateDisplayRange();
+    }//GEN-LAST:event_maxDisplayVolumeFieldFocusLost
+
+    private void minDisplayVolumeFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_minDisplayVolumeFieldKeyPressed
+        //if (!evt.) return;
+        //System.out.println("Changed to " + minDisplayVolumeField.getText());
+    }//GEN-LAST:event_minDisplayVolumeFieldKeyPressed
+
+    private void minDisplayVolumeFieldPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_minDisplayVolumeFieldPropertyChange
+        //System.out.println("Changed to " + minDisplayVolumeField.getText());
+    }//GEN-LAST:event_minDisplayVolumeFieldPropertyChange
+
+    private void minDisplayVolumeFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_minDisplayVolumeFieldActionPerformed
+        updateDisplayRange();
+    }//GEN-LAST:event_minDisplayVolumeFieldActionPerformed
+
+    private void minDisplayVolumeFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_minDisplayVolumeFieldFocusLost
+        updateDisplayRange();
+    }//GEN-LAST:event_minDisplayVolumeFieldFocusLost
 
     /**
      * @param args the command line arguments
@@ -800,8 +749,6 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
     private javax.swing.JButton closeButton;
     private javax.swing.JCheckBox cumulativeHistogramCheckBox;
     private javax.swing.JButton exportCellCountButton;
-    private javax.swing.JButton exportCellPosButton;
-    private javax.swing.JPanel exportPanel;
     private javax.swing.JPanel histogramChartPanel;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
@@ -814,7 +761,6 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
@@ -978,7 +924,7 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
 
     private void loadCells() {
         System.out.println("Loading cells");
-        CellImporter importer = new CellImporter(experiment, this);
+        CellImporterCSV importer = new CellImporterCSV(experiment, this);
         Thread thread = new Thread(importer);
         thread.start();
     }

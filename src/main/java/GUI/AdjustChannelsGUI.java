@@ -7,10 +7,15 @@ package GUI;
 
 import experiments.Constants;
 import experiments.Experiment;
+import experiments.ExperimentNew;
 import experiments.Fish;
 import experiments.FishGroup;
+import experiments.FishGroupNew;
+import experiments.FishNew;
 import experiments.ImageAnalysis;
+import experiments.ImageAnalysisNew;
 import experiments.Measurement;
+import experiments.MeasurementNew;
 import java.util.ArrayList;
 
 /**
@@ -18,18 +23,18 @@ import java.util.ArrayList;
  * @author janlu
  */
 public class AdjustChannelsGUI extends javax.swing.JDialog {
-    ArrayList<ImageAnalysis> validAnalyses = new ArrayList();
-    ImageAnalysis chosenAnalysis;
+    ArrayList<ImageAnalysisNew> validAnalyses = new ArrayList();
+    ImageAnalysisNew chosenAnalysis;
 
     /**
      * Creates new form AdjustChannelsGUI
      */
-    public AdjustChannelsGUI(java.awt.Frame parent, boolean modal, Experiment experiment) {
+    public AdjustChannelsGUI(java.awt.Frame parent, boolean modal, ExperimentNew experiment) {
         super(parent, modal);
-        for(FishGroup group: experiment.getGroups()) {
-            for(Fish fish : group.getFishList()) {
-                for(Measurement measurement : fish.getMeasurements()) {
-                    for (ImageAnalysis analysis : measurement.getAnalyses()) {
+        for(FishGroupNew group: experiment.getGroups()) {
+            for(FishNew fish : group.getFishList()) {
+                for(MeasurementNew measurement : fish.getMeasurements()) {
+                    for (ImageAnalysisNew analysis : measurement.getAnalysisList()) {
                         if (analysis.isAnalysisType(Constants.ANALYSIS_FLATTENED)) validAnalyses.add(analysis);
                     }
                 }
@@ -39,7 +44,7 @@ public class AdjustChannelsGUI extends javax.swing.JDialog {
         
         initComponents();
         analysisComboBox.removeAllItems();
-        for (ImageAnalysis analysis : validAnalyses) analysisComboBox.addItem(analysis.getAnalysisName());
+        for (ImageAnalysisNew analysis : validAnalyses) analysisComboBox.addItem(analysis.getAnalysisName());
     }
 
     /**
@@ -162,7 +167,7 @@ public class AdjustChannelsGUI extends javax.swing.JDialog {
     private javax.swing.JButton startButton;
     // End of variables declaration//GEN-END:variables
 
-    ImageAnalysis getAnalysis() {
+    ImageAnalysisNew getAnalysis() {
         return chosenAnalysis;
     }
 }

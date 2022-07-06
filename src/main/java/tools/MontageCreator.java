@@ -8,10 +8,15 @@ package tools;
 import GUI.MainMenuGUI;
 import experiments.Constants;
 import experiments.Experiment;
+import experiments.ExperimentNew;
 import experiments.Fish;
 import experiments.FishGroup;
+import experiments.FishGroupNew;
+import experiments.FishNew;
 import experiments.ImageAnalysis;
+import experiments.ImageAnalysisNew;
 import experiments.Measurement;
+import experiments.MeasurementNew;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Overlay;
@@ -40,10 +45,10 @@ import org.apache.commons.csv.CSVPrinter;
  * @author janlu
  */
 public class MontageCreator implements Runnable{
-        Experiment experiment;
+        ExperimentNew experiment;
         MainMenuGUI parent;
         
-    public MontageCreator(Experiment experiment, MainMenuGUI parent) {
+    public MontageCreator(ExperimentNew experiment, MainMenuGUI parent) {
         this.experiment = experiment;
         this.parent = parent;
     }
@@ -54,16 +59,16 @@ public class MontageCreator implements Runnable{
         sendStopMessage("Creating montage");
     }//Single Channels
     private void createAllMontages() {
-        for(FishGroup group : experiment.getGroups()) {
-            for (Fish fish : group.getFishList()){
-                ArrayList<ImageAnalysis> croppedAnalysisList = new ArrayList();
-                ArrayList<ImageAnalysis> countedAnalysisList = new ArrayList();
+        for(FishGroupNew group : experiment.getGroups()) {
+            for (FishNew fish : group.getFishList()){
+                ArrayList<ImageAnalysisNew> croppedAnalysisList = new ArrayList();
+                ArrayList<ImageAnalysisNew> countedAnalysisList = new ArrayList();
                 File[] fileList = new File[2];
-                for (Measurement measurement : fish.getMeasurements()) {
-                    ImageAnalysis tempCropped = null;
-                    ImageAnalysis tempCounted = null;
+                for (MeasurementNew measurement : fish.getMeasurements()) {
+                    ImageAnalysisNew tempCropped = null;
+                    ImageAnalysisNew tempCounted = null;
                     boolean hasMontage = false;
-                    for (ImageAnalysis analysis : measurement.getAnalyses()) {
+                    for (ImageAnalysisNew analysis : measurement.getAnalysisList()) {
                         if (analysis.isAnalysisType(Constants.ANALYSIS_MONTAGE)) {
                             hasMontage = true;
                         }
@@ -191,16 +196,16 @@ public class MontageCreator implements Runnable{
     private void createCellCSV() {
         ArrayList<ArrayList<String>> outList = new ArrayList();
         ArrayList<String[]> outLocationList = new ArrayList();
-        for(FishGroup group : experiment.getGroups()) {
-            for (Fish fish : group.getFishList()){
-                ArrayList<ImageAnalysis> countedAnalysisList = new ArrayList();
+        for(FishGroupNew group : experiment.getGroups()) {
+            for (FishNew fish : group.getFishList()){
+                ArrayList<ImageAnalysisNew> countedAnalysisList = new ArrayList();
                 ArrayList<String> cellCounts = new ArrayList();
                 ArrayList<String> cellLocationsTemp = new ArrayList();
                 String[] cellLocations = new String[0];
                 cellCounts.add(group.getGroupName());
                 cellCounts.add(fish.getName());
-                for (Measurement measurement : fish.getMeasurements()) {
-                    for (ImageAnalysis analysis : measurement.getAnalyses()) {
+                for (MeasurementNew measurement : fish.getMeasurements()) {
+                    for (ImageAnalysisNew analysis : measurement.getAnalysisList()) {
                         if (analysis.isAnalysisType(Constants.ANALYSIS_CELLSCOUNTED)) countedAnalysisList.add(analysis);
                     }
                 }
@@ -208,7 +213,7 @@ public class MontageCreator implements Runnable{
                 int largestCellCount = 0;
                 ArrayList<Integer> imageWidth = new ArrayList();
                 ArrayList<Integer> imageHeight = new ArrayList();
-                for (ImageAnalysis analysis : countedAnalysisList) {
+                for (ImageAnalysisNew analysis : countedAnalysisList) {
                     cellCounts.add(Integer.toString(analysis.getIntStorage()[0]));
                     if (analysis.getIntStorage()[0] > largestCellCount) largestCellCount = analysis.getIntStorage()[0];
                     ImagePlus imp = IJ.openImage(analysis.getAnalysisFiles()[0].getAbsolutePath());
