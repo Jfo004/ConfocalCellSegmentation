@@ -43,7 +43,7 @@ public class Flattener {
     double[][] compositeIntensities;
     boolean doIntensityCalibration;
     boolean userCalibration;
-    private ImageImporter iI;
+    private OLDIMSImporter iI;
     private int nFiles;
     private String[] pMethodS = new String[] {"Maximum", "Average", "Median", "Sum"};
     private int[] pMethodV = new int[] {ZProjector.MAX_METHOD, ZProjector.AVG_METHOD, ZProjector.MEDIAN_METHOD, ZProjector.SUM_METHOD};
@@ -85,7 +85,7 @@ public class Flattener {
             wasCanceled = true; 
             return;
         }
-        iI = new ImageImporter(isDir, dir);
+        iI = new OLDIMSImporter(isDir, dir);
         iI.prepareImportImaris();
         this.nFiles = iI.getNumberOfImages();
         this.channelIntensities = new double[iI.nChannels()][2];
@@ -214,7 +214,7 @@ public class Flattener {
         this.calibrationImage = calImg;
         this.doIntensityCalibration = true;
         this.userCalibration = true;
-        this.iI = new ImageImporter(isDir, targetLoc);
+        this.iI = new OLDIMSImporter(isDir, targetLoc);
         this.iI.prepareImportImaris();
         this.nFiles = iI.getNumberOfImages();
         doUserCalibration(true);
@@ -239,7 +239,7 @@ public class Flattener {
         this.makeComposite = makeComp;
         this.doIntensityCalibration = false;
         this.userCalibration = false;
-        this.iI = new ImageImporter(isDir, targetLoc);
+        this.iI = new OLDIMSImporter(isDir, targetLoc);
         this.iI.prepareImportImaris();
         this.nFiles = iI.getNumberOfImages();
     }

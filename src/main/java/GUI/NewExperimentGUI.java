@@ -13,10 +13,12 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.time.Instant;
 import java.util.HashMap;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import org.apache.commons.lang.StringUtils;
 import tools.ExperimentImportCreated;
+import tools.FileType;
 
 /**
  *
@@ -52,7 +54,6 @@ public class NewExperimentGUI extends javax.swing.JDialog {
         createWellLayoutButton = new javax.swing.JButton();
         createdWellLayoutField = new javax.swing.JLabel();
         experimentNameField = new javax.swing.JTextField();
-        enableGroupingCheckBox = new javax.swing.JCheckBox();
         backButton = new javax.swing.JButton();
         dateField = new javax.swing.JFormattedTextField();
         timeField = new javax.swing.JFormattedTextField();
@@ -60,6 +61,8 @@ public class NewExperimentGUI extends javax.swing.JDialog {
         fertilizationTimeLabel = new javax.swing.JLabel();
         fertilizationTimeDateField = new javax.swing.JFormattedTextField();
         fertilizationTimeTimeField = new javax.swing.JFormattedTextField();
+        jLabel1 = new javax.swing.JLabel();
+        fileTypeBox = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
@@ -97,13 +100,6 @@ public class NewExperimentGUI extends javax.swing.JDialog {
             }
         });
 
-        enableGroupingCheckBox.setText("Enable grouping");
-        enableGroupingCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                enableGroupingCheckBoxActionPerformed(evt);
-            }
-        });
-
         backButton.setText("Back");
         backButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -127,6 +123,10 @@ public class NewExperimentGUI extends javax.swing.JDialog {
         fertilizationTimeTimeField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT))));
         fertilizationTimeTimeField.setText("02:02");
 
+        jLabel1.setText("File type:");
+
+        fileTypeBox.setModel(new DefaultComboBoxModel<>(FileType.values()));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -140,14 +140,7 @@ public class NewExperimentGUI extends javax.swing.JDialog {
                         .addComponent(createExperimentButton))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(enableGroupingCheckBox)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                    .addComponent(fertilizationTimeLabel)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(fertilizationTimeDateField, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(fertilizationTimeTimeField, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGroup(layout.createSequentialGroup()
                                     .addComponent(createWellLayoutButton, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -162,12 +155,26 @@ public class NewExperimentGUI extends javax.swing.JDialog {
                                             .addComponent(dateField, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
                                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                             .addComponent(timeField, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addComponent(experimentNameField))))
+                                        .addComponent(experimentNameField)))
+                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                            .addComponent(fertilizationTimeLabel)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED))
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addComponent(jLabel1)
+                                            .addGap(68, 68, 68)))
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(fileTypeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addComponent(fertilizationTimeDateField, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                            .addComponent(fertilizationTimeTimeField, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)))))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(confocalFolderButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(confocalFolderField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                        .addGap(0, 41, Short.MAX_VALUE)))
+                        .addGap(0, 31, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -187,13 +194,15 @@ public class NewExperimentGUI extends javax.swing.JDialog {
                     .addComponent(fertilizationTimeLabel)
                     .addComponent(fertilizationTimeDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(fertilizationTimeTimeField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 19, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(fileTypeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 20, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(confocalFolderButton)
                     .addComponent(confocalFolderField))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(enableGroupingCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(38, 38, 38)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(createWellLayoutButton)
                     .addComponent(createdWellLayoutField))
@@ -242,17 +251,13 @@ public class NewExperimentGUI extends javax.swing.JDialog {
         else {
             confocalFolderField.setForeground(new Color (0, 0, 0));
         }
-        if (enableGroupingCheckBox.isSelected()) {
-            if (groupMap == null) {
-                createdWellLayoutField.setForeground(new Color (255,0,0));
-                return;
-            }
-            experiment = new ExperimentNew(experimentNameField.getText(), confocalDirectory, timeOfFertilization, timeOfInjection, groupMap);
+        
+        if (groupMap == null) {
+            createdWellLayoutField.setForeground(new Color (255,0,0));
+            return;
         }
-        else {
-            System.out.println("Creating");
-            experiment = new ExperimentNew(experimentNameField.getText().trim(), confocalDirectory, timeOfFertilization, timeOfInjection, null);
-        }
+        experiment = new ExperimentNew(experimentNameField.getText(), confocalDirectory, (FileType) fileTypeBox.getSelectedItem(), timeOfFertilization, timeOfInjection, groupMap);
+        
         System.out.println("Created");
         dispose();
     }//GEN-LAST:event_createExperimentButtonActionPerformed
@@ -276,11 +281,6 @@ public class NewExperimentGUI extends javax.swing.JDialog {
             this.confocalFolderField.setText(confocalDirectory.getName());
         }        
     }//GEN-LAST:event_confocalFolderButtonActionPerformed
-
-    private void enableGroupingCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enableGroupingCheckBoxActionPerformed
-        if (this.enableGroupingCheckBox.isSelected()) this.createWellLayoutButton.setEnabled(true);
-        else this.createWellLayoutButton.setEnabled(false);
-    }//GEN-LAST:event_enableGroupingCheckBoxActionPerformed
 
     private void createWellLayoutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createWellLayoutButtonActionPerformed
         WellLayoutSelectorGUI layoutSelector = new WellLayoutSelectorGUI( (JFrame) this.getParent(), true);
@@ -345,13 +345,14 @@ public class NewExperimentGUI extends javax.swing.JDialog {
     private javax.swing.JButton createWellLayoutButton;
     private javax.swing.JLabel createdWellLayoutField;
     private javax.swing.JFormattedTextField dateField;
-    private javax.swing.JCheckBox enableGroupingCheckBox;
     private javax.swing.JTextField experimentNameField;
     private javax.swing.JLabel experimentNameLable;
     private javax.swing.JFormattedTextField fertilizationTimeDateField;
     private javax.swing.JLabel fertilizationTimeLabel;
     private javax.swing.JFormattedTextField fertilizationTimeTimeField;
+    private javax.swing.JComboBox<FileType> fileTypeBox;
     private javax.swing.JLabel injectionTimeLabel;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JFormattedTextField timeField;
     // End of variables declaration//GEN-END:variables
 }

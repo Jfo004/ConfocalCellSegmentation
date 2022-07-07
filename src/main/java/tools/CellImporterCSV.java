@@ -50,7 +50,7 @@ public class CellImporterCSV implements Runnable{
         for (FishGroupNew fishGroup : experiment.getGroups()) {
             CellGroup cellGroup = new CellGroup(fishGroup.getGroupName());
             for (FishNew fish : fishGroup.getFishList()) {
-                CellFish cellFish = new CellFish(fish.getName());
+                CellSubject cellFish = new CellSubject(fish.getName());
                 for (MeasurementNew measurement : fish.getMeasurements()) {
                     for (ImageAnalysisNew analysis : measurement.getAnalysisList()) {
                         if (analysis.isAnalysisType(Constants.ANALYSIS_CELLSSEGMENTED)) {

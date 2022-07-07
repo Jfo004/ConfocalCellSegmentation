@@ -13,11 +13,11 @@ import mcib3d.geom.Objects3DPopulation;
  *
  * @author janlu
  */
-public class CellFish {
+public class CellSubject {
     ArrayList<CellDay> dayList = new ArrayList();
     private String fishName;
     
-    public CellFish(String name) {
+    public CellSubject(String name) {
         this.fishName = name;
     }
     

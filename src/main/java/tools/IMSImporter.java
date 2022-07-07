@@ -9,7 +9,6 @@ import ij.measure.Calibration;
 import ij.process.LUT;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList; 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import loci.formats.FormatException;
@@ -19,7 +18,6 @@ import loci.formats.meta.IMetadata;
 import loci.plugins.util.ImageProcessorReader;
 import ome.units.quantity.Length;
 import ome.xml.model.primitives.Color;
-import org.apache.commons.io.FilenameUtils;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -32,84 +30,47 @@ import org.apache.commons.io.FilenameUtils;
  *image information on request
  * @author janlu
  */
-public class OptiImageImporter {
-    private Boolean isDirectory = false;
-    private String targetLoc = "";
-    private ArrayList<String> filesToOpen = new ArrayList<String>();
-    private int nFiles = 0;
+public class IMSImporter extends ImageImporter {
     
-    /**
-     * Constructs importer with given import options and creates BF LUT.
-     * @param isDir True if targets are multiple files in a directory, false if
-     * the target is a single file.
-     * @param targetLocation Location of directory or file.
-     */
-    public OptiImageImporter(Boolean isDir, String targetLocation) {
-        this.isDirectory = isDir;
-        this.targetLoc = targetLocation;
-        if(!this.isDirectory){       
-            this.filesToOpen.add(targetLoc);
-        }
-        else{
-            File dir = new File(this.targetLoc);
-            File[] files = dir.listFiles();
-            //Select all valid files
-            try(ImarisHDFReader tester = new ImarisHDFReader()){
-                for (File file : files) {
-                    String tempId = file.getAbsolutePath();
-                    if(!tester.isThisType(tempId, true)) {
-                        continue;
-                    }
-                    filesToOpen.add(tempId);
-                }
-            } catch (IOException e) {
-                IJ.error("Error checking files: " + e.getMessage());
-            }   
-        }
-        this.nFiles = this.filesToOpen.size();
+//    /**
+//     * Constructs importer with given import options and creates BF LUT.
+//     * @param isDir True if targets are multiple files in a directory, false if
+//     * the target is a single file.
+//     * @param targetLocation Location of directory or file.
+//     */
+//    public IMSImporter(Boolean isDir, String targetLocation) {
+//        setDir(isDir, targetLocation);
+//    }
+//
+//    private void setDir(Boolean isDir, String targetLocation) {
+//        this.isDirectory = isDir;
+//        this.targetLoc = targetLocation;
+//        if(!this.isDirectory){       
+//            this.filesToOpen.add(targetLoc);
+//        }
+//        else{
+//            File dir = new File(this.targetLoc);
+//            File[] files = dir.listFiles();
+//            //Select all valid files
+//            try(ImarisHDFReader tester = new ImarisHDFReader()){
+//                for (File file : files) {
+//                    String tempId = file.getAbsolutePath();
+//                    if(!tester.isThisType(tempId, true)) {
+//                        continue;
+//                    }
+//                    filesToOpen.add(tempId);
+//                }
+//            } catch (IOException e) {
+//                IJ.error("Error checking files: " + e.getMessage());
+//            }   
+//        }
+//        this.nFiles = this.filesToOpen.size();
+//    }
+    
+    public IMSImporter() {
     }
     
-    public OptiImageImporter(File file) {
-        if (file.isFile()) {
-            nFiles = 1;
-            filesToOpen.add(file.getAbsolutePath());
-            return;
-        }
-        try(ImarisHDFReader tester = new ImarisHDFReader()){
-            for (File testFile : file.listFiles()) {
-                if(!tester.isThisType(testFile.getAbsolutePath(), true)) {
-                    continue;
-                }
-                filesToOpen.add(testFile.getAbsolutePath());
-            }
-        } catch (IOException e) {
-            IJ.error("Error checking files: " + e.getMessage());
-        }
-        nFiles = filesToOpen.size();
-    }
     
-    /**
-     * Checks if there is a file in the file list at index
-     * @param idx Index to be checked
-     * @return Returns true if the file list has a none empty entry at index
-     */
-    public Boolean hasImageAt(int idx) {
-        if (idx < 0 || idx >= this.filesToOpen.size()) {
-            return false;
-        }
-        else if ("".equals(this.filesToOpen.get(idx))) {
-            return false;
-        }
-        return true;
-    }
-    
-    /**
-     * Returns number of images in file list
-     * @return number of images
-     */
-    public int getNumberOfImages(){
-        return this.nFiles;
-    }
     
     /**
      * DONT USE
@@ -118,6 +79,7 @@ public class OptiImageImporter {
      * @param idx Index of image to be retrieved
      * @return Image at idx as ImagePlus
      */
+    @Override
     public ImagePlus getImage(int idx){
         
         ImageProcessorReader reader = new ImageProcessorReader(new ImarisHDFReader());
@@ -138,29 +100,13 @@ public class OptiImageImporter {
         return null;
     }
     
-    /**
-     * Method to return a list of file names prepared for import
-     * @return String array of filenames, null if no files prepared
-     */
-    public String[] getFileNames(){
-        //returns null if there are no files
-        if (nFiles == 0) {
-            return null;
-        }
-        //getting list of file names
-        String[] fileNames = new String[nFiles]; 
-        for (int i = 0; i < nFiles; i++){
-            File tempFile = new File(this.filesToOpen.get(i));
-            fileNames[i] = tempFile.getName();          
-        }
-        return fileNames;
-    }
     
     /**
      * Returns the acquisition time of an image as seconds since java epoch.
      * @param idx index of image
      * @return 
      */
+    @Override
     public long getAquisitionTime(int idx) {
         ImarisHDFReader reader = new ImarisHDFReader();
         IMetadata meta = MetadataTools.createOMEXMLMetadata();
@@ -169,7 +115,7 @@ public class OptiImageImporter {
         reader.setId(filesToOpen.get(idx)); 
         return (meta.getImageAcquisitionDate(0).asInstant().getMillis()/1000);
         } catch (FormatException | IOException ex) {
-            Logger.getLogger(OptiImageImporter.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(IMSImporter.class.getName()).log(Level.SEVERE, null, ex);
         }
         return 0;
     }
@@ -179,6 +125,7 @@ public class OptiImageImporter {
      * @param idx index of image
      * @return 
      */
+    @Override
     int nChannels(int idx) {
         ImageProcessorReader reader = new ImageProcessorReader(new ImarisHDFReader());
         
@@ -192,6 +139,7 @@ public class OptiImageImporter {
         }
     }
 
+    @Override
     ImagePlus getChannel(int imageIdx, int channelIdx) {
         //Setup and check of index
         if( imageIdx >= filesToOpen.size() || imageIdx < 0) {
@@ -212,7 +160,7 @@ public class OptiImageImporter {
             for(int i = 0;i < sizeZ; i++) {
                 channelStack.addSlice(reader.openProcessors(reader.getIndex(i, channelIdx, 0))[0]);
             }
-            ImagePlus channelImp = new ImagePlus(getTitle(imageIdx) + "_Channel:" + channelIdx, channelStack);
+            ImagePlus channelImp = new ImagePlus(getFileName(imageIdx) + "_Channel:" + channelIdx, channelStack);
             
             //Setting pixel size
             Calibration cal = channelImp.getCalibration();
@@ -240,23 +188,13 @@ public class OptiImageImporter {
             return channelImp;
         } 
         catch (IOException | FormatException ex) {
-            Logger.getLogger(OptiImageImporter.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(IMSImporter.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;   
     }
 
-    
-    /**
-     * Returns the name of a file without extension
-     * @param idx index of file
-     * @return 
-     */
-    String getTitle(int idx) {
-        File tempFile = new File(filesToOpen.get(idx));
-        return FilenameUtils.removeExtension(tempFile.getName());
-    }
-
-    ImagePlus getSubImage(int startX, int startY, int width, int height, int cellChannel, int imageIdx) {
+    @Override
+    ImagePlus getSubStack(int startX, int startY, int width, int height, int cellChannel, int imageIdx) {
         if( imageIdx >= filesToOpen.size() || imageIdx < 0) {
             return null;
         }
@@ -279,7 +217,7 @@ public class OptiImageImporter {
             for(int i = 0;i < sizeZ; i++) {
                 channelStack.addSlice(reader.openProcessors(reader.getIndex(i, cellChannel, 0), startX, startY, width, height)[0]);                
             }
-            ImagePlus channelImp = new ImagePlus(getTitle(imageIdx) + "_Channel:" + cellChannel, channelStack);
+            ImagePlus channelImp = new ImagePlus(getFileName(imageIdx) + "_Channel:" + cellChannel, channelStack);
             
             //Setting pixel size
             Calibration cal = channelImp.getCalibration();
@@ -307,8 +245,20 @@ public class OptiImageImporter {
             return channelImp;
         } 
         catch (IOException | FormatException ex) {
-            Logger.getLogger(OptiImageImporter.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(IMSImporter.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;   
+    }
+
+
+    @Override
+    public boolean isValidFile(File file) {
+        try(ImarisHDFReader tester = new ImarisHDFReader()){
+        return tester.isThisType(file.getAbsolutePath(), true);
+
+        } catch (IOException ex) {
+            Logger.getLogger(IMSImporter.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
     }
 }

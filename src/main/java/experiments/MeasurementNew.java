@@ -18,6 +18,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import loci.formats.FormatException;
 import loci.formats.in.ImarisHDFReader;
 import org.apache.commons.io.FilenameUtils;
+import tools.FileType;
 import tools.InstantAdapter;
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -49,6 +50,10 @@ public class MeasurementNew implements Serializable {
         setAcquisitionTime(confocalFile);
         this.parent = parent;
     }
+
+    public FileType getFileType() {
+        return this.getParent().getParentFishGroup().getParent().getFileType();
+    }    
 
     @XmlAttribute(name = "File_Name")
     public String getFileName() {

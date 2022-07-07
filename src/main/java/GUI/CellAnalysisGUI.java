@@ -37,7 +37,7 @@ import org.jfree.data.xy.XYIntervalSeriesCollection;
 import org.jfree.data.xy.XYSeriesCollection;
 import tools.CellAnalysator;
 import tools.CellDay;
-import tools.CellFish;
+import tools.CellSubject;
 import tools.CellGroup;
 import tools.CellHolder;
 import tools.CellImporter;
@@ -908,7 +908,7 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
         DefaultMutableTreeNode root = new DefaultMutableTreeNode(cellHolder);
         for (CellGroup cellGroup : cellHolder.getGroupList()) {
             DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode(cellGroup);
-            for (CellFish cellFish : cellGroup.getFishList()) {
+            for (CellSubject cellFish : cellGroup.getFishList()) {
                 DefaultMutableTreeNode fishNode = new DefaultMutableTreeNode(cellFish);
                 for (CellDay cellDay : cellFish.getDayList()) {
                     DefaultMutableTreeNode cellDayNode = new DefaultMutableTreeNode(cellDay);

@@ -63,9 +63,9 @@ public class VolumeHistogramGenerator implements Runnable {
                 dataList.add(getCellGroupData((CellGroup) object));
                 nameList.add(((CellGroup) object).toString());
             }
-            else if (object instanceof CellFish) {
-                dataList.add(getCellFishData((CellFish) object));
-                nameList.add(((CellFish) object).toString());
+            else if (object instanceof CellSubject) {
+                dataList.add(getCellFishData((CellSubject) object));
+                nameList.add(((CellSubject) object).toString());
             }
             else if (object instanceof CellDay) {
                 dataList.add(getCellDayData((CellDay) object));
@@ -107,7 +107,7 @@ public class VolumeHistogramGenerator implements Runnable {
     public synchronized void setSeries(ArrayList<Object> seriesList) {
         this.seriesList = new ArrayList();
         for (Object object : seriesList) {
-            if (object instanceof CellHolder || object instanceof CellGroup || object instanceof CellFish || object instanceof CellDay) this.seriesList.add(object);
+            if (object instanceof CellHolder || object instanceof CellGroup || object instanceof CellSubject || object instanceof CellDay) this.seriesList.add(object);
             else System.out.println("Histogram generator dropped object");
         }
     } 
@@ -121,7 +121,7 @@ public class VolumeHistogramGenerator implements Runnable {
         }
         return volumeList;
     }
-    private ArrayList<Double> getCellFishData(CellFish CellFish) {
+    private ArrayList<Double> getCellFishData(CellSubject CellFish) {
         ArrayList<Double> volumeList = new ArrayList();
         for (CellDay cellDay : CellFish.getDayList()) {
             volumeList.addAll(getCellDayData(cellDay));
@@ -130,7 +130,7 @@ public class VolumeHistogramGenerator implements Runnable {
     }
     private ArrayList<Double> getCellGroupData(CellGroup CellGroup) {
         ArrayList<Double> volumeList = new ArrayList();
-        for (CellFish cellFish : CellGroup.getFishList()) {
+        for (CellSubject cellFish : CellGroup.getFishList()) {
             volumeList.addAll(getCellFishData(cellFish));
         }
         return volumeList;

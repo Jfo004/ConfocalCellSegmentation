@@ -40,7 +40,7 @@ public class OptiFlattener implements Runnable{
     private int tileSize;
     private String outputDirectory;
     private int zProjectionMethod;
-    private OptiImageImporter iI;
+    private ImageImporter imageImporter;
     private int nFiles;
     private ExperimentNew experiment;
     private MainMenuGUI parent;
@@ -60,27 +60,27 @@ public class OptiFlattener implements Runnable{
      * @param isDir True if location is a directory
      * @param tileSize Tile size of mosaic
      */
-    public OptiFlattener(String targetLoc, String outputDirectory, boolean isDir, int zProjectionMethod, int tileSize) {
-        this(new OptiImageImporter(isDir, targetLoc), outputDirectory, zProjectionMethod, tileSize);
-    }
-    
-    
-    /**
-     * 
-     * @param iI
-     * @param outputDirectory
-     * @param zProjectionMethod
-     * @param tileSize 
-     */
-    public OptiFlattener(OptiImageImporter iI, String outputDirectory, int zProjectionMethod, int tileSize) {
-        this.iI = iI;
-        this.tileSize = tileSize;
-        this.zProjectionMethod = zProjectionMethod;
-        this.outputDirectory = outputDirectory;
-        this.nFiles = iI.getNumberOfImages();
-        flattenArray(true);
-        
-    }
+//    public OptiFlattener(String targetLoc, String outputDirectory, boolean isDir, int zProjectionMethod, int tileSize) {
+//        this(new IMSImporter(isDir, targetLoc), outputDirectory, zProjectionMethod, tileSize);
+//    }
+//    
+//    
+//    /**
+//     * 
+//     * @param iI
+//     * @param outputDirectory
+//     * @param zProjectionMethod
+//     * @param tileSize 
+//     */
+//    public OptiFlattener(IMSImporter iI, String outputDirectory, int zProjectionMethod, int tileSize) {
+//        this.imageImporter = iI;
+//        this.tileSize = tileSize;
+//        this.zProjectionMethod = zProjectionMethod;
+//        this.outputDirectory = outputDirectory;
+//        this.nFiles = iI.getNumberOfImages();
+//        flattenArray(true);
+//        
+//    }
 
     public OptiFlattener(ExperimentNew experiment, MainMenuGUI parent, int tileSize, int projectionMethod) {
         this.zProjectionMethod = projectionMethod;
@@ -108,14 +108,14 @@ public class OptiFlattener implements Runnable{
         
         for (int i = 0; i < nFiles; i++) {
                         
-            int nChannels = iI.nChannels(i);
+            int nChannels = imageImporter.nChannels(i);
             ImagePlus[] channelArray = new ImagePlus[nChannels];
-            String imageTitle = iI.getTitle(i);
+            String imageTitle = imageImporter.getFileName(i);
             int totalFiles = (nChannels == 1) ? 1 : nChannels + 1;
             channelIDs = IntStream.range(0, totalFiles).toArray();
             for (int j = 0; j < nChannels; j++) {
                 sendFileUpdateMessage(j, totalFiles);
-                ImagePlus imp = iI.getChannel(i,j);
+                ImagePlus imp = imageImporter.getChannel(i,j);
                 
                 
                 //Processing channels
@@ -304,8 +304,9 @@ public class OptiFlattener implements Runnable{
         }
     }
 
-    private void flattenMeasurement(MeasurementNew measurement) { 
-        iI = new OptiImageImporter(measurement.getConfocalFile());
+    private void flattenMeasurement(MeasurementNew measurement) {
+        imageImporter = ImageImporterFactory.createImporter(measurement.getFileType());
+        imageImporter.setImport(measurement.getConfocalFile());
         nFiles = 1;
         outputDirectory = outputDirectoryFile.getAbsolutePath() 
                 + "\\" + measurement.getParent().getParentFishGroup().getGroupName() 

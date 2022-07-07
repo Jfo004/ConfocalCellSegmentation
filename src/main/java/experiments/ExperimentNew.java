@@ -12,6 +12,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.apache.commons.io.FilenameUtils;
+import tools.FileType;
 import tools.InstantAdapter;
 
 /*
@@ -34,6 +35,7 @@ public class ExperimentNew implements Serializable{
     private int groupCount = 0;
     private int fishCount = 0;
     private int imageCount = 0;
+    private FileType fileType;
     
     
 /**
@@ -46,8 +48,9 @@ public class ExperimentNew implements Serializable{
     public ExperimentNew() {
         
     }
-    public ExperimentNew(String name, File confocalDirectory, Instant timeOfFertilization, Instant timeOfInjection, HashMap groupMap) {
+    public ExperimentNew(String name, File confocalDirectory,FileType fileType, Instant timeOfFertilization, Instant timeOfInjection, HashMap groupMap) {
         this.name = name;
+        this.fileType = fileType;
         this.confocalDirectory = confocalDirectory;
         this.timeOfFertilization = timeOfFertilization;
         this.timeOfInjection = timeOfInjection;
@@ -171,6 +174,14 @@ public class ExperimentNew implements Serializable{
         for (FishGroupNew group : groups) {
             group.updateFile(experimentPath);
         }
+    }
+
+    @XmlAttribute(name = "File_Type")
+    public FileType getFileType() {
+        return fileType;
+    }
+    public void setFileType(FileType fileType) {
+        this.fileType = fileType;
     }
 
 

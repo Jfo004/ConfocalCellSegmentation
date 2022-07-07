@@ -53,7 +53,7 @@ public class CellImporter implements Runnable{
         for (FishGroup fishGroup : experiment.getGroups()) {
             CellGroup cellGroup = new CellGroup(fishGroup.getGroupName());
             for (Fish fish : fishGroup.getFishList()) {
-                CellFish cellFish = new CellFish(fish.getName());
+                CellSubject cellFish = new CellSubject(fish.getName());
                 for (Measurement measurement : fish.getMeasurements()) {
                     for (ImageAnalysis analysis : measurement.getAnalyses()) {
                         if (analysis.isAnalysisType(Constants.ANALYSIS_CELLSSEGMENTED)) {

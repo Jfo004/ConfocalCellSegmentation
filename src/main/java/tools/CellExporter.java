@@ -35,7 +35,7 @@ public class CellExporter {
             writer.writeNext(header);
             
             for (CellGroup group : cellGroups) {
-                for (CellFish fish : group.getFishList()) {
+                for (CellSubject fish : group.getFishList()) {
                     for (CellDay day : fish.getDayList()) {
                         for (Cell cell : day.getCellList()) {
                              String[] lineOut = {group.getGroupName(),

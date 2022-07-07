@@ -285,8 +285,9 @@ public class AutomaticCellFinder implements Runnable{
         int startY = fishRoi.getBounds().y;
         int width = fishRoi.getBounds().width;
         int height = fishRoi.getBounds().height;
-        OptiImageImporter importer = new OptiImageImporter(measurement.getConfocalFile());
-        ImagePlus image = importer.getSubImage(startX,startY,width,height,cellChannel, 0);
+        ImageImporter importer = ImageImporterFactory.createImporter(measurement.getFileType());
+        importer.setImport(measurement.getConfocalFile());
+        ImagePlus image = importer.getSubStack(startX,startY,width,height,cellChannel, 0);
         int initialX = image.getWidth();
         int initialY = image.getHeight();
         image.show();

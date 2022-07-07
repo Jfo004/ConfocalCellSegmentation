@@ -12,7 +12,7 @@ import java.util.ArrayList;
  * @author janlu
  */
 public class CellGroup {
-    private ArrayList<CellFish> cellFishList = new ArrayList();
+    private ArrayList<CellSubject> cellFishList = new ArrayList();
     private String groupName;
     
     public CellGroup(String groupName) {
@@ -23,11 +23,11 @@ public class CellGroup {
         return groupName;
     }
     
-    public ArrayList<CellFish> getFishList() {
+    public ArrayList<CellSubject> getFishList() {
         return cellFishList;
     }
     
-    public void addFish(CellFish cellFish) {
+    public void addFish(CellSubject cellFish) {
         cellFishList.add(cellFish);
     }
     

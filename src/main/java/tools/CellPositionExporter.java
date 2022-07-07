@@ -47,7 +47,7 @@ public class CellPositionExporter {
             writer.writeNext(markerLabels);
             ArrayList<String[]> outList = new ArrayList();
             for (CellGroup group : cellGroups) {
-                for (CellFish fish : group.getFishList()) {
+                for (CellSubject fish : group.getFishList()) {
                     for (CellDay day : fish.getDayList()) {
                         
                         for (int i = 0; i < markers.length; i++) {
