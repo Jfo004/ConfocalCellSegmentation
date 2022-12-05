@@ -5,14 +5,14 @@
  */
 package GUI;
 
-import experiments.Experiment;
+import Containers.Old.ExperimentOld;
 
 /**
  *
  * @author janlu
  */
 public class OpenExperimentGUI extends javax.swing.JDialog {
-    Experiment experiment;
+    ExperimentOld experiment;
     /**
      * Creates new form openExperimentGUI
      */
@@ -87,7 +87,7 @@ public class OpenExperimentGUI extends javax.swing.JDialog {
         this.dispose();
     }//GEN-LAST:event_openExperimentButtonActionPerformed
 
-    public Experiment getExperiment() {
+    public ExperimentOld getExperiment() {
         return experiment;
     }
     /**

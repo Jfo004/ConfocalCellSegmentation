@@ -5,53 +5,35 @@
  */
 package tools;
 
+import importexport.ImageImporter;
+import importexport.ImageImporterFactory;
 import GUI.MainMenuGUI;
 import GUI.Segmentation;
-import experiments.Constants;
-import experiments.Experiment;
-import experiments.ExperimentNew;
-import experiments.Fish;
-import experiments.FishGroup;
-import experiments.FishGroupNew;
-import experiments.FishNew;
-import experiments.ImageAnalysis;
-import experiments.ImageAnalysisNew;
-import experiments.Measurement;
-import experiments.MeasurementNew;
+import Containers.Constants;
+import Containers.Experiment.Experiment;
+import Containers.Experiment.ExperimentGroup;
+import Containers.Experiment.Subject;
+import Containers.Experiment.ImageAnalysis;
+import Containers.Experiment.Measurement;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.gui.Plot;
 import ij.gui.Roi;
-import ij.gui.WaitForUserDialog;
 import ij.io.RoiDecoder;
 import ij.measure.Calibration;
 import ij.plugin.GaussianBlur3D;
 import ij.plugin.RGBStackMerge;
 import ij.plugin.RoiRotator;
 import ij.plugin.ZProjector;
-import ij.plugin.filter.GaussianBlur;
-import ij.plugin.filter.PlugInFilterRunner;
-import ij.plugin.filter.Rotator;
-import ij.plugin.filter.Transformer;
-import ij.plugin.frame.RoiManager;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
-import ij.process.ImageStatistics;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
-import ij.process.StackProcessor;
-import ij.process.StackStatistics;
 import java.awt.Color;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
@@ -60,11 +42,8 @@ import mcib3d.geom.Objects3DPopulation;
 import mcib3d.image3d.ImageByte;
 import mcib3d.image3d.ImageFloat;
 import mcib3d.image3d.ImageHandler;
-import mcib3d.image3d.ImageInt;
 import mcib3d.image3d.ImageShort;
-import mcib3d.image3d.processing.MaximaFinder;
 import mcib3d.image3d.regionGrowing.Watershed3D;
-import mcib3d.utils.ArrayUtil;
 import tools.tweaked.MaximaFinderTweaked;
 import util.opencsv.CSVWriter;
 
@@ -75,18 +54,23 @@ import util.opencsv.CSVWriter;
  * @author janlu
  */
 public class AutomaticCellFinder implements Runnable{
-    private ExperimentNew experiment;
+    private Experiment experiment;
     private MainMenuGUI parent;
-    private ArrayList<MeasurementNew> measurementList = new ArrayList();
+    private ArrayList<Measurement> measurementList = new ArrayList();
     private int cellChannel;
+    private ArrayList<Integer> measureChannels = new ArrayList();
     private double cellCutoffIntensity;
     private Segmentation userInterface;
     
     
-    public AutomaticCellFinder(ExperimentNew experiment, MainMenuGUI parent, int cellChannel) {
+    public AutomaticCellFinder(Experiment experiment, MainMenuGUI parent) {
         this.experiment = experiment;
         this.parent = parent;
-        this.cellChannel = cellChannel;
+        this.cellChannel = experiment.getSegmentationChannel();
+        Boolean[] boolAnalysisArray = experiment.getAnalysisChannels();
+        for (int i = 0; i < boolAnalysisArray.length; i ++) {
+            if (boolAnalysisArray[i]) measureChannels.add(i);
+        }
     }
     
     @Override
@@ -107,7 +91,7 @@ public class AutomaticCellFinder implements Runnable{
         int current = 0;
         
         //Segmentation loop
-        for (MeasurementNew measurement : measurementList) {
+        for (Measurement measurement : measurementList) {
             
             //Send updates
             sendUpdateMessage(measurement.getFileName(), current, total);
@@ -115,7 +99,7 @@ public class AutomaticCellFinder implements Runnable{
             sendFileUpdateMessage("Importing", 0, 5);
             
             //Import Stack
-            ImagePlus originalTargetImp = importCroppedChannel(measurement);
+            ImagePlus originalTargetImp = importCroppedChannel(measurement, cellChannel);
             
             //Manual processing
             //sendFileUpdateMessage("Pre-processing", 1, 5);
@@ -127,9 +111,9 @@ public class AutomaticCellFinder implements Runnable{
             ImagePlus projection = zp.getProjection();
             projection.show();
             targetImp.show();
-            ArrayList<ImageAnalysisNew> analysisList = measurement.getAnalysisList();
+            ArrayList<ImageAnalysis> analysisList = measurement.getAnalysisList();
             ImagePlus croppedImage = new ImagePlus();
-            for (ImageAnalysisNew analysis : analysisList) {
+            for (ImageAnalysis analysis : analysisList) {
                 if (analysis.isAnalysisType(Constants.ANALYSIS_CROPPED)) {
                     croppedImage = IJ.openImage(analysis.getAnalysisFiles()[0].getAbsolutePath());
                     croppedImage.show();
@@ -229,11 +213,11 @@ public class AutomaticCellFinder implements Runnable{
     }
     
     private void createMeasurementList() {
-        for (FishGroupNew fishGroup : experiment.getGroups()) {
-            for (FishNew fish : fishGroup.getFishList()) {
-                for (MeasurementNew measurement : fish.getMeasurements()) {
+        for (ExperimentGroup fishGroup : experiment.getGroups()) {
+            for (Subject fish : fishGroup.getSubjectList()) {
+                for (Measurement measurement : fish.getMeasurements()) {
                     boolean completed = false;
-                    for (ImageAnalysisNew analysis : measurement.getAnalysisList()) {
+                    for (ImageAnalysis analysis : measurement.getAnalysisList()) {
                         if (analysis.isAnalysisType(Constants.ANALYSIS_CELLSSEGMENTED)){
                             completed = true;
                         } 
@@ -244,42 +228,32 @@ public class AutomaticCellFinder implements Runnable{
         }
     }
     private void sendStartMessage() {
-        SwingUtilities.invokeLater( new Runnable() {
-            public void run() {
-                parent.setTask("Cell Segmenter", Constants.TASK_CELLSEGMENTING);
-            }
+        SwingUtilities.invokeLater(() -> {
+            parent.setTask("Cell Segmenter", Constants.TASK_CELLSEGMENTING);
         });
     }
     private void sendUpdateMessage(String fileName, int progress, int total) {
-        SwingUtilities.invokeLater( new Runnable() {
-            public void run() {
-                parent.setProgress(fileName, progress, total);
-            }
+        SwingUtilities.invokeLater(() -> {
+            parent.setProgress(fileName, progress, total);
         });
     }
     private void sendFileUpdateMessage(String task, int progress, int total) {
-        SwingUtilities.invokeLater( new Runnable() {
-            public void run() {
-                parent.setFileProgress(task, progress, total);
-            }
+        SwingUtilities.invokeLater(() -> {
+            parent.setFileProgress(task, progress, total);
         });
     }
     private void sendStopMessage(String message) {
-        SwingUtilities.invokeLater( new Runnable() {
-            public void run() {
-                parent.finishTask(message);
-            }
+        SwingUtilities.invokeLater(() -> {
+            parent.finishTask(message);
         });
     }
     private void sendSaveMessage() {
-        SwingUtilities.invokeLater( new Runnable() {
-            public void run() {
-                parent.saveExperiment();
-            }
+        SwingUtilities.invokeLater(() -> {
+            parent.saveExperiment();
         });
     }
 
-    private ImagePlus importCroppedChannel(MeasurementNew measurement) {
+    private ImagePlus importCroppedChannel(Measurement measurement, int channel) {
         Roi fishRoi = RoiDecoder.open(measurement.getFishLocation().getAbsolutePath());
         int startX = fishRoi.getBounds().x;
         int startY = fishRoi.getBounds().y;
@@ -287,7 +261,7 @@ public class AutomaticCellFinder implements Runnable{
         int height = fishRoi.getBounds().height;
         ImageImporter importer = ImageImporterFactory.createImporter(measurement.getFileType());
         importer.setImport(measurement.getConfocalFile());
-        ImagePlus image = importer.getSubStack(startX,startY,width,height,cellChannel, 0);
+        ImagePlus image = importer.getSubStack(startX,startY,width,height,channel, 0, 0);
         int initialX = image.getWidth();
         int initialY = image.getHeight();
         image.show();
@@ -408,62 +382,62 @@ public class AutomaticCellFinder implements Runnable{
         return maximaFinder.getImagePeaks();
     }
 
-    private int getMedian(long[] histogram) {
-        long totalCount = 0;
-        long tempSum = 0;
-        for (long count : histogram) totalCount +=count;
-        for (int bin = 0; bin < histogram.length; bin++) {
-            tempSum += histogram[bin];
-            if (tempSum >= (totalCount/2)) return bin;
-        }
-        return 0;
-    }
+//    private int getMedian(long[] histogram) {
+//        long totalCount = 0;
+//        long tempSum = 0;
+//        for (long count : histogram) totalCount +=count;
+//        for (int bin = 0; bin < histogram.length; bin++) {
+//            tempSum += histogram[bin];
+//            if (tempSum >= (totalCount/2)) return bin;
+//        }
+//        return 0;
+//    }
 
-    private int getMAD(double median, long[] histogram) {
-        long[] difference = new long[histogram.length];
-        for (int bin = 0; bin < histogram.length; bin++) {
-            difference[(int)Math.abs((long)median - bin)] +=histogram[bin];
-        }
+//    private int getMAD(double median, long[] histogram) {
+//        long[] difference = new long[histogram.length];
+//        for (int bin = 0; bin < histogram.length; bin++) {
+//            difference[(int)Math.abs((long)median - bin)] +=histogram[bin];
+//        }
+//
+//        return getMedian(difference);
+//    }
 
-        return getMedian(difference);
-    }
+//    private void viewHistogram(ImageHandler segmentedImage) {
+//        Objects3DPopulation population = new Objects3DPopulation(segmentedImage);
+//        List objects = population.getMeasuresGeometrical();
+//        double[] volumeArray = new double[objects.size()];
+//        for (int idx = 0; idx < objects.size(); idx++) {
+//            volumeArray[idx] = ((Double[])objects.get(idx))[1];
+//        }
+//        
+//        Arrays.sort(volumeArray);
+//        double min = volumeArray[0];
+//        double max = 1000;
+//        int bins = 100;
+//        double binSize = (max-min)/bins;
+//        double[] histogram = new double[bins];
+//        int crop = 1000;
+//        for (double value : volumeArray) {
+//            if (value > crop) {
+//                histogram[histogram.length - 1]++;
+//                continue;
+//            }
+//            histogram[(int)Math.floor((value-min)/binSize)]++;
+//        }
+//        double[] histogramX = new double[bins];
+//        for (int idx = 0; idx < histogramX.length; idx++) {
+//            histogramX[idx] = idx*binSize;
+//        }
+//        
+//        Plot plot = new Plot("Distribution", "Size", "count");
+//        plot.addPoints(histogramX, histogram, Plot.BAR);
+//        plot.show();
+//        WaitForUserDialog dialog = new WaitForUserDialog("asdf");
+//        dialog.show();
+//
+//    }
 
-    private void viewHistogram(ImageHandler segmentedImage) {
-        Objects3DPopulation population = new Objects3DPopulation(segmentedImage);
-        List objects = population.getMeasuresGeometrical();
-        double[] volumeArray = new double[objects.size()];
-        for (int idx = 0; idx < objects.size(); idx++) {
-            volumeArray[idx] = ((Double[])objects.get(idx))[1];
-        }
-        
-        Arrays.sort(volumeArray);
-        double min = volumeArray[0];
-        double max = 1000;
-        int bins = 100;
-        double binSize = (max-min)/bins;
-        double[] histogram = new double[bins];
-        int crop = 1000;
-        for (double value : volumeArray) {
-            if (value > crop) {
-                histogram[histogram.length - 1]++;
-                continue;
-            }
-            histogram[(int)Math.floor((value-min)/binSize)]++;
-        }
-        double[] histogramX = new double[bins];
-        for (int idx = 0; idx < histogramX.length; idx++) {
-            histogramX[idx] = idx*binSize;
-        }
-        
-        Plot plot = new Plot("Distribution", "Size", "count");
-        plot.addPoints(histogramX, histogram, Plot.BAR);
-        plot.show();
-        WaitForUserDialog dialog = new WaitForUserDialog("asdf");
-        dialog.show();
-
-    }
-
-    private void createAnalysis(ImageHandler segmentedImage, ImageHandler targetIH, MeasurementNew measurement) {
+    private void createAnalysis(ImageHandler segmentedImage, ImageHandler targetIH, Measurement measurement) {
        String outputString = measurement.getConfocalFile().getParent()
                .concat("\\ProcessedFiles\\Segmented\\")
                .concat(measurement.getParent().getParentFishGroup().getGroupName())
@@ -473,32 +447,100 @@ public class AutomaticCellFinder implements Runnable{
        outputDir.mkdirs();
        File outputImage = new File(outputString.concat("\\controlImage.tif"));
        File outputCells = new File(outputString.concat("\\Objects.csv"));
-       
+    
+    
+    // Loop load fluorescent channels
+    
+    ImageHandler[] fluoImgHandler = new ImageHandler[measureChannels.size()];
+    
+    for (int i = 0; i < measureChannels.size(); i++) {
+        // load fluorescent image for measurement
+        if (measureChannels.get(i) == cellChannel) fluoImgHandler[i] = targetIH;
+        else { 
+            System.out.println("Importing new fluorescent channel");
+            ImagePlus fluorescentImage = importCroppedChannel(measurement, measureChannels.get(i));
+        
+            if (fluorescentImage.getProcessor() instanceof FloatProcessor) fluoImgHandler[i] = new ImageFloat(fluorescentImage);
+                else if (fluorescentImage.getProcessor() instanceof ShortProcessor) fluoImgHandler[i] = new ImageShort(fluorescentImage);
+                else if (fluorescentImage.getProcessor() instanceof ByteProcessor) fluoImgHandler[i] = new ImageByte(fluorescentImage);
+            else {
+                     System.out.println(fluorescentImage.getTitle() + " processor type not found.");
+            }
+        }
+    }
+            
        //Save cell information
        Objects3DPopulation population = new Objects3DPopulation(segmentedImage);
        try {
             FileWriter outputFile = new FileWriter(outputCells);
             CSVWriter writer = new CSVWriter(outputFile);
-            String[] header = {"Volume.Pixels", "Volume.Unit", "Mean.Intensity", "Object.Number", "Object.PosX", "Object.PosY", "Object.PosZ"};
-            writer.writeNext(header);
-            System.out.println(Arrays.toString(header));
+            String[] header = new String[8 + (measureChannels.size() * 5)];
+            header[0] = "Object.Number";
+            header[1] = "Pos.X";
+            header[2] = "Pos.Y";
+            header[3] = "Pos.Z";
+            header[4] = "Volume.Pixels";
+            header[5] = "Volume.Unit";
+            header[6] = "Surface.Pixels";
+            header[7] = "Surface.Unit";
+            for (int i = 0; i < measureChannels.size(); i ++) {
+                int index = header.length - (measureChannels.size()*5) + (i*5);
+                header[index] = "Channel." + measureChannels.get(i) + ".Min.Intensity";
+                header[index + 1] = "Channel." + measureChannels.get(i) + ".Max.Intensity";
+                header[index + 2] = "Channel." + measureChannels.get(i) + ".Average.Intensity";
+                header[index + 3] = "Channel." + measureChannels.get(i) + ".Median.Intensity";
+                header[index + 4] = "Channel." + measureChannels.get(i) + ".Integrated.Intensity";
+            }
+            writer.writeNext(header);           
             for (Object3D object : population.getObjectsList()) {
-                String volumePix = String.valueOf(object.getVolumePixels());
-                String volumeUnit = String.valueOf(object.getVolumeUnit());
-                String averageIntensity = String.valueOf(object.getPixMeanValue(targetIH));
                 String objectNumber = String.valueOf(object.getValue());
                 String positionX = String.valueOf(object.getCenterX());
                 String positionY = String.valueOf(object.getCenterY());
                 String positionZ = String.valueOf(object.getCenterZ());
+                String volumePix = String.valueOf(object.getVolumePixels());
+                String volumeUnit = String.valueOf(object.getVolumeUnit());
+                String surfacePix = String.valueOf(object.getAreaPixels());
+                String surfaceUnit = String.valueOf(object.getAreaUnit());
+                
+                
+                String[] minIntensity = new String[fluoImgHandler.length];
+                String[] maxIntensity = new String[fluoImgHandler.length];
+                String[] averageIntensity = new String[fluoImgHandler.length];
+                String[] medianIntensity = new String[fluoImgHandler.length];
+                String[] integratedIntensity = new String[fluoImgHandler.length];
+                for (int i = 0; i < fluoImgHandler.length; i++) {
+                    minIntensity[i] = String.valueOf(object.getPixMinValue(fluoImgHandler[i]));
+                    maxIntensity[i] = String.valueOf(object.getPixMaxValue(fluoImgHandler[i]));
+                    averageIntensity[i] = String.valueOf(object.getPixMeanValue(fluoImgHandler[i]));
+                    medianIntensity[i] = String.valueOf(object.getPixMedianValue(fluoImgHandler[i]));
+                    integratedIntensity[i] = String.valueOf(object.getIntegratedDensity(fluoImgHandler[i]));
+                }
+                
            
-                String[] outputLine = {volumePix,volumeUnit,averageIntensity,objectNumber,positionX,positionY,positionZ};
-                System.out.println(Arrays.toString(outputLine));
+                String[] outputLine = new String[8 + (measureChannels.size() * 5)];
+                outputLine[0] = objectNumber;
+                outputLine[1] = positionX;
+                outputLine[2] = positionY;
+                outputLine[3] = positionZ;
+                outputLine[4] = volumePix;
+                outputLine[5] = volumeUnit;
+                outputLine[6] = surfacePix;
+                outputLine[7] = surfaceUnit;
+                for (int i = 0; i < measureChannels.size(); i ++) {
+                    int index = outputLine.length - (measureChannels.size()*5) + (i*5);
+                    outputLine[index] = minIntensity[i];
+                    outputLine[index + 1] = maxIntensity[i];
+                    outputLine[index + 2] = averageIntensity[i];
+                    outputLine[index + 3] = medianIntensity[i];
+                    outputLine[index + 4] = integratedIntensity[i];
+                }
+
                 writer.writeNext(outputLine);
             }
             writer.close();
         }
         catch (IOException e) {
-            System.out.println("IOException");
+            System.out.println("IOException CSV save");
         }       
        
        //Create and save control image
@@ -514,7 +556,7 @@ public class AutomaticCellFinder implements Runnable{
        targetIH.closeImagePlus();
        
        //create Analysis
-       ImageAnalysisNew analysis = new ImageAnalysisNew(Constants.ANALYSIS_CELLSSEGMENTED, new File[] {outputImage}, new int[]{-1}, measurement.getAcquisitionTime(), measurement);
+       ImageAnalysis analysis = new ImageAnalysis(Constants.ANALYSIS_CELLSSEGMENTED, new File[] {outputImage}, new int[]{-1}, measurement.getAcquisitionTime(), measurement);
        analysis.setRois(new File[] {outputCells});
        measurement.addAnalysis(analysis);
     }

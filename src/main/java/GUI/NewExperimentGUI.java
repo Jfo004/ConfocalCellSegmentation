@@ -5,29 +5,35 @@
  */
 package GUI;
 
-import experiments.Experiment;
-import experiments.ExperimentNew;
+import Containers.Experiment.Experiment;
+import Containers.WellLayout;
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.time.Instant;
-import java.util.HashMap;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import org.apache.commons.lang.StringUtils;
-import tools.ExperimentImportCreated;
-import tools.FileType;
+import importexport.FileType;
+import importexport.ImageImporter;
+import importexport.ImageImporterFactory;
+import java.awt.Dimension;
+import java.util.ArrayList;
+import java.util.Collections;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComboBox;
 
 /**
  *
  * @author janlu
  */
 public class NewExperimentGUI extends javax.swing.JDialog {
-    private ExperimentNew experiment;
+    private Experiment experiment;
     private File confocalDirectory;
-    private HashMap groupMap; 
+    private WellLayout wellLayout; 
+    private int imageCount;
+    private FileType fileType;
+    private int channelCount;
     
     
     /**
@@ -55,14 +61,12 @@ public class NewExperimentGUI extends javax.swing.JDialog {
         createdWellLayoutField = new javax.swing.JLabel();
         experimentNameField = new javax.swing.JTextField();
         backButton = new javax.swing.JButton();
-        dateField = new javax.swing.JFormattedTextField();
-        timeField = new javax.swing.JFormattedTextField();
-        injectionTimeLabel = new javax.swing.JLabel();
-        fertilizationTimeLabel = new javax.swing.JLabel();
-        fertilizationTimeDateField = new javax.swing.JFormattedTextField();
-        fertilizationTimeTimeField = new javax.swing.JFormattedTextField();
         jLabel1 = new javax.swing.JLabel();
         fileTypeBox = new javax.swing.JComboBox<>();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        channelTable = new javax.swing.JTable();
+        channelWarningLabel = new javax.swing.JLabel();
+        folderInformationLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
@@ -107,25 +111,20 @@ public class NewExperimentGUI extends javax.swing.JDialog {
             }
         });
 
-        dateField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("y/MM/dd"))));
-        dateField.setText("2001/01/01");
-
-        timeField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT))));
-        timeField.setText("01:01");
-
-        injectionTimeLabel.setText("Injection time:");
-
-        fertilizationTimeLabel.setText("Fertilization Time:");
-
-        fertilizationTimeDateField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("y/MM/dd"))));
-        fertilizationTimeDateField.setText("2002/02/02");
-
-        fertilizationTimeTimeField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter(java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT))));
-        fertilizationTimeTimeField.setText("02:02");
-
         jLabel1.setText("File type:");
 
         fileTypeBox.setModel(new DefaultComboBoxModel<>(FileType.values()));
+
+        channelTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                channelTableMouseReleased(evt);
+            }
+        });
+        jScrollPane1.setViewportView(channelTable);
+
+        channelWarningLabel.setForeground(new java.awt.Color(255, 0, 0));
+
+        folderInformationLabel.setText(" ");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -134,116 +133,86 @@ public class NewExperimentGUI extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(backButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(createExperimentButton))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(layout.createSequentialGroup()
-                                    .addComponent(createWellLayoutButton, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(createdWellLayoutField, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(layout.createSequentialGroup()
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(experimentNameLable)
-                                        .addComponent(injectionTimeLabel))
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                        .addGroup(layout.createSequentialGroup()
-                                            .addComponent(dateField, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(timeField, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addComponent(experimentNameField)))
-                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                            .addComponent(fertilizationTimeLabel)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED))
-                                        .addGroup(layout.createSequentialGroup()
-                                            .addComponent(jLabel1)
-                                            .addGap(68, 68, 68)))
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(fileTypeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGroup(layout.createSequentialGroup()
-                                            .addComponent(fertilizationTimeDateField, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(fertilizationTimeTimeField, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(jLabel1)
+                                    .addComponent(experimentNameLable))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(experimentNameField, javax.swing.GroupLayout.PREFERRED_SIZE, 159, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(fileTypeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(confocalFolderButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(confocalFolderField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                        .addGap(0, 31, Short.MAX_VALUE)))
-                .addContainerGap())
+                                .addComponent(confocalFolderField, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(createWellLayoutButton, javax.swing.GroupLayout.PREFERRED_SIZE, 144, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(createdWellLayoutField, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(110, 110, 110)
+                                .addComponent(channelWarningLabel))
+                            .addGroup(layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(folderInformationLabel)
+                                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 446, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(backButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(createExperimentButton)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(experimentNameLable)
-                    .addComponent(experimentNameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(dateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(timeField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(injectionTimeLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(fertilizationTimeLabel)
-                    .addComponent(fertilizationTimeDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(fertilizationTimeTimeField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(fileTypeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 20, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(confocalFolderButton)
-                    .addComponent(confocalFolderField))
-                .addGap(38, 38, 38)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(createWellLayoutButton)
-                    .addComponent(createdWellLayoutField))
-                .addGap(11, 11, 11)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(createExperimentButton)
-                    .addComponent(backButton))
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(experimentNameLable)
+                                    .addComponent(experimentNameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel1)
+                                    .addComponent(fileTypeBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(confocalFolderButton)
+                                    .addComponent(confocalFolderField))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(createWellLayoutButton)
+                                    .addComponent(createdWellLayoutField)))
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(backButton)
+                            .addComponent(createExperimentButton))
+                        .addGap(9, 9, 9))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(folderInformationLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+                .addComponent(channelWarningLabel))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void createExperimentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createExperimentButtonActionPerformed
-        Instant timeOfFertilization;
-        Instant timeOfInjection;
+
         if (StringUtils.isBlank(experimentNameField.getText())) {
             experimentNameLable.setForeground(new Color(255, 0, 0));
             return;
         }
         else experimentNameLable.setForeground(new Color(0, 0, 0));
         
-        try {
-            String tempTime = dateField.getText().replace("/", "-").concat("T").concat(timeField.getText().concat(":00Z"));
-            timeOfInjection = Instant.parse(tempTime);
-            injectionTimeLabel.setForeground(new Color(0,0,0));
-        }
-        catch (java.time.format.DateTimeParseException e) {
-            injectionTimeLabel.setForeground(new Color(255,0,0));
-            return;
-        }
         
-        try {
-            String tempTime = fertilizationTimeDateField.getText().replace("/", "-").concat("T").concat(fertilizationTimeTimeField.getText().concat(":00Z"));
-            timeOfFertilization = Instant.parse(tempTime);
-            fertilizationTimeLabel.setForeground(new Color(0,0,0));
-        }
-        catch (java.time.format.DateTimeParseException e) {
-            fertilizationTimeLabel.setForeground(new Color(255,0,0));
-            return;
-        }
         if (confocalDirectory == null) {
             confocalFolderField.setForeground(new Color (255, 0, 0));
             return;
@@ -252,13 +221,31 @@ public class NewExperimentGUI extends javax.swing.JDialog {
             confocalFolderField.setForeground(new Color (0, 0, 0));
         }
         
-        if (groupMap == null) {
+        if (wellLayout == null) {
             createdWellLayoutField.setForeground(new Color (255,0,0));
             return;
         }
-        experiment = new ExperimentNew(experimentNameField.getText(), confocalDirectory, (FileType) fileTypeBox.getSelectedItem(), timeOfFertilization, timeOfInjection, groupMap);
         
-        System.out.println("Created");
+        int bfChannel = 0;
+        for (int i = 0; i < channelTable.getRowCount(); i++) {
+            if((Boolean)channelTable.getModel().getValueAt(i, 1)) bfChannel = i;
+        }
+        int segmentationChannel = 1;
+        for (int i = 0; i < channelTable.getRowCount(); i++) {
+            if((Boolean)channelTable.getModel().getValueAt(i, 2)) segmentationChannel = i;
+        }
+        
+        Boolean[] analysisChannels = new Boolean[channelTable.getRowCount()];
+        for (int i = 0; i < channelTable.getRowCount(); i++) {
+            analysisChannels[i] = (Boolean)channelTable.getModel().getValueAt(i, 3);
+        }
+        
+        String[] channelColors = new String[channelTable.getRowCount()];
+        for (int i = 0; i < channelTable.getRowCount(); i++) {
+            channelColors[i] = (String)channelTable.getModel().getValueAt(i, 4);
+        }
+        
+        experiment = new Experiment(experimentNameField.getText(), confocalDirectory, (FileType) fileTypeBox.getSelectedItem(), wellLayout.getLayout(), bfChannel, segmentationChannel,analysisChannels, channelColors);
         dispose();
     }//GEN-LAST:event_createExperimentButtonActionPerformed
 
@@ -278,20 +265,29 @@ public class NewExperimentGUI extends javax.swing.JDialog {
         int returnVal = fileChooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             confocalDirectory = fileChooser.getSelectedFile();
-            this.confocalFolderField.setText(confocalDirectory.getName());
+            this.confocalFolderField.setText("Processing...");
+            updateTable();
         }        
     }//GEN-LAST:event_confocalFolderButtonActionPerformed
 
     private void createWellLayoutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createWellLayoutButtonActionPerformed
-        WellLayoutSelectorGUI layoutSelector = new WellLayoutSelectorGUI( (JFrame) this.getParent(), true);
+        WellLayoutSelectorGUI layoutSelector = new WellLayoutSelectorGUI( (JFrame) this.getParent(), true, wellLayout);
         layoutSelector.setLocationRelativeTo(this);
         layoutSelector.setVisible(true);
-        groupMap = layoutSelector.getGroupMap();
-        if (groupMap == null) createdWellLayoutField.setText("None created");
+        wellLayout = layoutSelector.getWellLayout();
+        if (wellLayout == null) createdWellLayoutField.setText("None created");
         else createdWellLayoutField.setText("Selected");
     }//GEN-LAST:event_createWellLayoutButtonActionPerformed
 
-    public ExperimentNew getExperiment() {
+    private void channelTableMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_channelTableMouseReleased
+        int column = channelTable.getSelectedColumn();
+        if (column <= 0) return;
+        if (column > 3) return;
+        Boolean currentValue = (Boolean)channelTable.getValueAt(channelTable.getSelectedRow(), column);
+        channelTable.getModel().setValueAt(!currentValue, channelTable.getSelectedRow(), column);
+    }//GEN-LAST:event_channelTableMouseReleased
+
+    public Experiment getExperiment() {
         return experiment;
     }
     /**
@@ -339,20 +335,99 @@ public class NewExperimentGUI extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
+    private javax.swing.JTable channelTable;
+    private javax.swing.JLabel channelWarningLabel;
     private javax.swing.JButton confocalFolderButton;
     private javax.swing.JLabel confocalFolderField;
     private javax.swing.JButton createExperimentButton;
     private javax.swing.JButton createWellLayoutButton;
     private javax.swing.JLabel createdWellLayoutField;
-    private javax.swing.JFormattedTextField dateField;
     private javax.swing.JTextField experimentNameField;
     private javax.swing.JLabel experimentNameLable;
-    private javax.swing.JFormattedTextField fertilizationTimeDateField;
-    private javax.swing.JLabel fertilizationTimeLabel;
-    private javax.swing.JFormattedTextField fertilizationTimeTimeField;
     private javax.swing.JComboBox<FileType> fileTypeBox;
-    private javax.swing.JLabel injectionTimeLabel;
+    private javax.swing.JLabel folderInformationLabel;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JFormattedTextField timeField;
+    private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
+
+    private void updateTable() {
+        ArrayList<Integer> channelCounts = new ArrayList();
+        imageCount = 0;
+        fileType = (FileType) fileTypeBox.getSelectedItem();
+        ImageImporter tester = ImageImporterFactory.createImporter(fileType);
+        for (File file : confocalDirectory.listFiles()) {
+            if(file.isDirectory()) continue;
+            if(!tester.isValidFile(file)) continue;
+            imageCount++;
+            channelCounts.add(tester.nChannels(file));
+        }
+        if (imageCount == 0) {
+            this.confocalFolderField.setText("No images found");
+            confocalDirectory = null;
+            return;
+        }
+        int minChannels = Collections.min(channelCounts);
+        int maxChannels = Collections.max(channelCounts);
+        
+        if (minChannels != maxChannels) {
+            this.channelWarningLabel.setText("Images have different channel counts. Using lowest: " + minChannels);
+        }
+        this.channelWarningLabel.setText("");
+        if (minChannels < 2) {
+            this.confocalFolderField.setText("Directory contains images with less than 2 channels");
+            confocalDirectory = null;
+            return;
+        }
+        channelCount = minChannels;
+        
+        //Make table
+        ChannelTableModel tableModel = new ChannelTableModel();
+        String[] columnHeaders = {"Channel", "Brightfield", "Segmentation","Analysis Channel", "Color"};
+        tableModel.setColNames(columnHeaders);
+        
+        Integer[] channels = new Integer[channelCount];
+        for (int i = 0; i < channels.length; i++) channels[i] = i;
+        
+        Boolean[] isBrightField = new Boolean[channelCount];
+        isBrightField[0] = true;
+        for (int i = 1; i < isBrightField.length; i++) isBrightField[i] = false;
+        
+        Boolean[] doFluoAnalysis = new Boolean[channelCount];
+        for (int i = 0; i < doFluoAnalysis.length; i ++) doFluoAnalysis[i] = Boolean.FALSE;
+        
+        Boolean[] isSegmentationChannel = new Boolean[channelCount];
+        isSegmentationChannel[0] = false;
+        isSegmentationChannel[1] = true;
+        for (int i = 2; i < isSegmentationChannel.length; i++) isSegmentationChannel[i] = false;
+        
+        String[] defaultColors = { "Gray", "Red", "Green", "Blue", "Yellow", "Cyan", "Magenta" };
+        String[] channelColor = new String[channelCount];
+        for (int i = 0; i < channelColor.length; i ++) {
+            if (i > defaultColors.length) channelColor[i] = defaultColors[6];
+            else channelColor[i] = defaultColors[i];
+        }
+        JComboBox colorSelector = new JComboBox();
+        for (String color : defaultColors) {
+            colorSelector.addItem(color);
+        }
+        
+        Object[][] data = new Object[channelCount][5];
+        for (int i = 0; i < data.length; i ++) {
+            data[i][0] = channels[i];
+            data[i][1] = isBrightField[i];
+            data[i][2] = isSegmentationChannel[i];
+            data[i][3] = doFluoAnalysis[i];
+            data[i][4] = channelColor[i];
+        }
+        tableModel.setData(data);
+        channelTable.setModel(tableModel);
+        channelTable.getColumnModel().getColumn(4).setCellEditor(new DefaultCellEditor(colorSelector));
+        channelTable.getTableHeader().setReorderingAllowed(false);
+        channelTable.getTableHeader().setResizingAllowed(false);
+        this.confocalFolderField.setText("Selected");
+        this.folderInformationLabel.setText("Folder: " + confocalDirectory.getName() + "   Images: " + imageCount);
+        
+        
+        //Setup table
+    }
 }

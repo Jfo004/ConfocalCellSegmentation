@@ -89,6 +89,7 @@
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="addMaskButton" alignment="0" min="-2" max="-2" attributes="0"/>
                               <Component id="removeMaskButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="clearSliceButton" alignment="0" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jScrollPane1" pref="0" max="32767" attributes="0"/>
@@ -109,6 +110,8 @@
                           <Component id="addMaskButton" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="removeMaskButton" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="clearSliceButton" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <Component id="jScrollPane1" min="-2" pref="118" max="-2" attributes="0"/>
                   </Group>
@@ -161,6 +164,14 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="Mask"/>
           </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="clearSliceButton">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Clear slice"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="clearSliceButtonActionPerformed"/>
+          </Events>
         </Component>
       </SubComponents>
     </Container>

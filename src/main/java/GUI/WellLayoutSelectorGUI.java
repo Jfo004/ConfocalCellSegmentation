@@ -5,6 +5,7 @@
  */
 package GUI;
 
+import Containers.WellLayout;
 import java.util.HashMap;
 import javax.swing.DefaultListModel;
 import javax.swing.JTable;
@@ -16,15 +17,17 @@ import org.apache.commons.lang.StringUtils;
  * @author janlu
  */
 public class WellLayoutSelectorGUI extends javax.swing.JDialog {
-    HashMap groupMap;
+    WellLayout wellLayout;
     String[] rowLetters = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"};
 
     /**
      * Creates new form wellLayoutSelectorGUI
      */
-    public WellLayoutSelectorGUI(java.awt.Frame parent, boolean modal) {
+    public WellLayoutSelectorGUI(java.awt.Frame parent, boolean modal, WellLayout wellLayout) {
         super(parent, modal);
         initComponents();
+        this.wellLayout = wellLayout;
+        if (wellLayout != null) setLayout();
     }
 
     /**
@@ -141,6 +144,11 @@ public class WellLayoutSelectorGUI extends javax.swing.JDialog {
                 groupNameFieldActionPerformed(evt);
             }
         });
+        groupNameField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                groupNameFieldKeyReleased(evt);
+            }
+        });
 
         addGroupButton.setText("Add group");
         addGroupButton.addActionListener(new java.awt.event.ActionListener() {
@@ -233,6 +241,7 @@ public class WellLayoutSelectorGUI extends javax.swing.JDialog {
         ));
         layoutTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         layoutTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        layoutTable.setTableHeader(null);
         layoutTable.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
             public void mouseDragged(java.awt.event.MouseEvent evt) {
                 layoutTableMouseDragged(evt);
@@ -241,6 +250,9 @@ public class WellLayoutSelectorGUI extends javax.swing.JDialog {
         layoutTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 layoutTableMouseClicked(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                layoutTableMouseReleased(evt);
             }
         });
         jScrollPane2.setViewportView(layoutTable);
@@ -327,6 +339,49 @@ public class WellLayoutSelectorGUI extends javax.swing.JDialog {
     }//GEN-LAST:event_removeGroupButtonActionPerformed
 
     private void layoutTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_layoutTableMouseClicked
+//        int column = layoutTable.getSelectedColumn();
+//        int row = layoutTable.getSelectedRow();
+//        if ((column == 0) || (row == 0)) return;
+//        if (addNumberCheckbox.isSelected()) {
+//            if (layoutTable.getValueAt(row, column) == null) return;
+//            if (((String)layoutTable.getValueAt(row, column)).endsWith(")")) return;
+//            layoutTable.setValueAt(((String)layoutTable.getValueAt(row, column)) + "(" + addNumberSlider.getValue() + ")", row, column);
+//            return;
+//        }
+//        if (groupList.isSelectionEmpty()) return;
+//        if (layoutTable.getValueAt(row, column) != null) {
+//            layoutTable.setValueAt(null, row, column);
+//            return;
+//        }
+//        layoutTable.setValueAt(groupList.getSelectedValue(), row, column);
+    }//GEN-LAST:event_layoutTableMouseClicked
+
+    private void savePlateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_savePlateButtonActionPerformed
+        HashMap groupMap = new HashMap();
+        int columns = layoutTable.getColumnCount();
+        int rows = layoutTable.getRowCount();
+        String[][] wellMap = new String[columns - 1][rows - 1];
+        for (int i = 1; i < columns; i ++) {
+            for (int j = 1; j < rows; j++) {
+                String fieldID = rowLetters[j-1] + i;
+                groupMap.put(fieldID, layoutTable.getValueAt(j, i));
+                wellMap[i-1][j-1] = (String) layoutTable.getValueAt(j, i);
+            }
+        }
+        String[] groups = new String[groupList.getModel().getSize()];
+        for (int i = 0; i < groups.length; i++) {
+            groups[i] = groupList.getModel().getElementAt(i);
+        }
+        wellLayout = new WellLayout(groupMap, groups, wellMap);
+        
+        dispose();
+    }//GEN-LAST:event_savePlateButtonActionPerformed
+
+    private void layoutTableMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_layoutTableMouseDragged
+//        layoutTableMouseClicked(evt);
+    }//GEN-LAST:event_layoutTableMouseDragged
+
+    private void layoutTableMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_layoutTableMouseReleased
         int column = layoutTable.getSelectedColumn();
         int row = layoutTable.getSelectedRow();
         if ((column == 0) || (row == 0)) return;
@@ -342,24 +397,11 @@ public class WellLayoutSelectorGUI extends javax.swing.JDialog {
             return;
         }
         layoutTable.setValueAt(groupList.getSelectedValue(), row, column);
-    }//GEN-LAST:event_layoutTableMouseClicked
+    }//GEN-LAST:event_layoutTableMouseReleased
 
-    private void savePlateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_savePlateButtonActionPerformed
-        groupMap = new HashMap();
-        int columns = layoutTable.getColumnCount();
-        int rows = layoutTable.getRowCount();
-        for (int i = 1; i < columns; i ++) {
-            for (int j = 1; j < rows; j++) {
-                String fieldID = rowLetters[j-1] + i;
-                groupMap.put(fieldID, layoutTable.getValueAt(j, i));
-            }
-        }
-        dispose();
-    }//GEN-LAST:event_savePlateButtonActionPerformed
-
-    private void layoutTableMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_layoutTableMouseDragged
-        layoutTableMouseClicked(evt);
-    }//GEN-LAST:event_layoutTableMouseDragged
+    private void groupNameFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_groupNameFieldKeyReleased
+        if(evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) addGroupButtonActionPerformed(null);
+    }//GEN-LAST:event_groupNameFieldKeyReleased
 
     /**
      * @param args the command line arguments
@@ -392,7 +434,7 @@ public class WellLayoutSelectorGUI extends javax.swing.JDialog {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                WellLayoutSelectorGUI dialog = new WellLayoutSelectorGUI(new javax.swing.JFrame(), true);
+                WellLayoutSelectorGUI dialog = new WellLayoutSelectorGUI(new javax.swing.JFrame(), true, null);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {
@@ -426,7 +468,51 @@ public class WellLayoutSelectorGUI extends javax.swing.JDialog {
     private javax.swing.JButton savePlateButton;
     // End of variables declaration//GEN-END:variables
 
-    HashMap getGroupMap() {
-        return groupMap;
+    WellLayout getWellLayout() {
+        return wellLayout;
+    }
+
+    private void setLayout() {
+        String[] groups = wellLayout.getGroups();
+        String[][] wellMap = wellLayout.getWellMap();
+        
+        DefaultTableModel tableModel = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        layoutTable.setModel(tableModel);
+        int columnCount = wellMap.length + 1;
+        int rowCount = wellMap[0].length + 1;
+        
+        tableModel.setColumnCount(columnCount);
+        tableModel.setRowCount(rowCount);
+        
+        layoutTable.setValueAt("-", 0,0);
+        layoutTable.setTableHeader(null);
+        for (int i = 1; i < columnCount; i++) {
+            layoutTable.setValueAt(i, 0, i);
+        }
+        for (int i = 1; i < rowCount; i++) {
+            layoutTable.setValueAt(rowLetters[i-1], i, 0);
+        }
+        System.out.println(" Colums:" + wellMap.length); 
+        for (String[] array : wellMap) {
+            System.out.println(" rows: " + array.length);
+        }
+        for (int i = 0; i < wellMap.length; i++) {
+            for (int j = 0; j < wellMap[0].length; j++) {
+                System.out.println("Row: " + j + " Column: " + i);
+                if(wellMap[i][j] == null) continue;
+                layoutTable.setValueAt(wellMap[i][j], j+1, i+1);
+            }
+        }
+        
+        DefaultListModel listModel = new DefaultListModel();
+        for (String group : groups) {
+            listModel.addElement(group);
+        }
+        groupList.setModel(listModel);
     }
 }

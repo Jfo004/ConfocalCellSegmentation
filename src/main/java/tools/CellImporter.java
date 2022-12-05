@@ -5,13 +5,17 @@
  */
 package tools;
 
+import Containers.Cells.Cell;
+import Containers.Cells.CellHolder;
+import Containers.Cells.CellDay;
+import Containers.Cells.CellGroup;
 import GUI.CellAnalysisGUI;
-import experiments.Constants;
-import experiments.Experiment;
-import experiments.Fish;
-import experiments.FishGroup;
-import experiments.ImageAnalysis;
-import experiments.Measurement;
+import Containers.Constants;
+import Containers.Old.ExperimentOld;
+import Containers.Old.SubjectOld;
+import Containers.Old.GroupOld;
+import Containers.Old.ImageAnalysisOls;
+import Containers.Old.MeasurementOld;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.plugin.ChannelSplitter;
@@ -31,14 +35,14 @@ import mcib3d.image3d.ImageShort;
  * @author janlu
  */
 public class CellImporter implements Runnable{
-    Experiment experiment;
+    ExperimentOld experiment;
     CellHolder cellHolder;
     CellAnalysisGUI parent;
     private int completed = 0;
     private int total = 0;
     private String currentFile;
     
-    public CellImporter(Experiment experiment, CellAnalysisGUI parent){
+    public CellImporter(ExperimentOld experiment, CellAnalysisGUI parent){
         this.experiment = experiment;
         this.parent = parent;
     }
@@ -50,12 +54,12 @@ public class CellImporter implements Runnable{
 
     private void createCellHolder() {
         this.cellHolder = new CellHolder();
-        for (FishGroup fishGroup : experiment.getGroups()) {
+        for (GroupOld fishGroup : experiment.getGroups()) {
             CellGroup cellGroup = new CellGroup(fishGroup.getGroupName());
-            for (Fish fish : fishGroup.getFishList()) {
+            for (SubjectOld fish : fishGroup.getFishList()) {
                 CellSubject cellFish = new CellSubject(fish.getName());
-                for (Measurement measurement : fish.getMeasurements()) {
-                    for (ImageAnalysis analysis : measurement.getAnalyses()) {
+                for (MeasurementOld measurement : fish.getMeasurements()) {
+                    for (ImageAnalysisOls analysis : measurement.getAnalyses()) {
                         if (analysis.isAnalysisType(Constants.ANALYSIS_CELLSSEGMENTED)) {
                             //send update
                             currentFile = "Fish: " + cellFish.toString() + " Time: " + analysis.getAnalysisTime().toString();
@@ -107,10 +111,10 @@ public class CellImporter implements Runnable{
     }
 
     private void countAnalyses() {
-        for (FishGroup fishGroup : experiment.getGroups()) {
-            for (Fish fish : fishGroup.getFishList()) {
-                for (Measurement measurement : fish.getMeasurements()) {
-                    for (ImageAnalysis analysis : measurement.getAnalyses()) {
+        for (GroupOld fishGroup : experiment.getGroups()) {
+            for (SubjectOld fish : fishGroup.getFishList()) {
+                for (MeasurementOld measurement : fish.getMeasurements()) {
+                    for (ImageAnalysisOls analysis : measurement.getAnalyses()) {
                         if (analysis.isAnalysisType(Constants.ANALYSIS_CELLSSEGMENTED)) {
                             total++;
                             break;

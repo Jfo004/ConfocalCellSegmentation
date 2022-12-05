@@ -4,8 +4,8 @@
  */
 package GUI;
 
-import experiments.Measurement;
-import experiments.MeasurementNew;
+import Containers.Old.MeasurementOld;
+import Containers.Experiment.Measurement;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Roi;
@@ -49,6 +49,7 @@ public class Segmentation extends javax.swing.JFrame {
         maskjList = new javax.swing.JList<>();
         addMaskButton = new javax.swing.JButton();
         maskLabel = new javax.swing.JLabel();
+        clearSliceButton = new javax.swing.JButton();
         flipPanel = new javax.swing.JPanel();
         flipVButton = new javax.swing.JButton();
         flipHButton = new javax.swing.JButton();
@@ -102,6 +103,13 @@ public class Segmentation extends javax.swing.JFrame {
 
         maskLabel.setText("Mask");
 
+        clearSliceButton.setText("Clear slice");
+        clearSliceButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearSliceButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout maskPanelLayout = new javax.swing.GroupLayout(maskPanel);
         maskPanel.setLayout(maskPanelLayout);
         maskPanelLayout.setHorizontalGroup(
@@ -113,7 +121,8 @@ public class Segmentation extends javax.swing.JFrame {
                     .addGroup(maskPanelLayout.createSequentialGroup()
                         .addGroup(maskPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(addMaskButton)
-                            .addComponent(removeMaskButton))
+                            .addComponent(removeMaskButton)
+                            .addComponent(clearSliceButton))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
                 .addContainerGap())
@@ -128,7 +137,9 @@ public class Segmentation extends javax.swing.JFrame {
                     .addGroup(maskPanelLayout.createSequentialGroup()
                         .addComponent(addMaskButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(removeMaskButton))
+                        .addComponent(removeMaskButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(clearSliceButton))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
@@ -302,7 +313,7 @@ public class Segmentation extends javax.swing.JFrame {
         fluoImp.deleteRoi();
         stackImp.deleteRoi();
         
-        bfImp.getProcessor().flipHorizontal();
+
         fluoImp.getProcessor().flipHorizontal();
         ImageStack stack = stackImp.getStack();
         for (int i = 1; i <= stack.size(); i++) {
@@ -322,7 +333,7 @@ public class Segmentation extends javax.swing.JFrame {
     private void flipVButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flipVButtonActionPerformed
         wasFlippedV = !wasFlippedV;
         
-        bfImp.getProcessor().flipVertical();
+
         fluoImp.getProcessor().flipVertical();
         ImageStack stack = stackImp.getStack();
         for (int i = 1; i <= stack.size(); i++) {
@@ -381,6 +392,17 @@ public class Segmentation extends javax.swing.JFrame {
         this.stackImp.setRoi(selectedRoi);
     }//GEN-LAST:event_maskjListValueChanged
 
+    private void clearSliceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearSliceButtonActionPerformed
+        Roi roiBackup = stackImp.getRoi();
+        stackImp.deleteRoi();
+        stackImp.getProcessor().setColor(0);
+        stackImp.getProcessor().fill();
+        stackImp.setRoi(roiBackup);
+        stackImp.updateAndDraw();
+        if(stackImp.getSlice() < stackImp.getNSlices()) stackImp.setSlice(stackImp.getSlice() + 1);
+        
+    }//GEN-LAST:event_clearSliceButtonActionPerformed
+
     
     /**
      * @param args the command line arguments
@@ -419,6 +441,7 @@ public class Segmentation extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addMaskButton;
+    private javax.swing.JButton clearSliceButton;
     private javax.swing.JButton decreaseStepSizeButton;
     private javax.swing.JButton flipHButton;
     private javax.swing.JPanel flipPanel;
@@ -473,7 +496,7 @@ public class Segmentation extends javax.swing.JFrame {
         maskjList.setEnabled(true);
     }
     
-    public void setIamges(ImagePlus bfImp, ImagePlus fluoImp, ImagePlus stackImp, MeasurementNew measurement) {
+    public void setIamges(ImagePlus bfImp, ImagePlus fluoImp, ImagePlus stackImp, Measurement measurement) {
         this.bfImp = bfImp;
         this.fluoImp = fluoImp;
         this.stackImp = stackImp;
@@ -488,7 +511,7 @@ public class Segmentation extends javax.swing.JFrame {
         
         this.bfImp.lock();
         this.fluoImp.lock();
-        this.stackImp.lock();
+
         
         int maximum = (int) fluoImp.getStatistics().max;
         

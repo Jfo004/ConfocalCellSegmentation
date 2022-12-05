@@ -6,17 +6,17 @@
 package tools;
 
 import GUI.MainMenuGUI;
-import experiments.Constants;
-import experiments.Experiment;
-import experiments.ExperimentNew;
-import experiments.Fish;
-import experiments.FishGroup;
-import experiments.FishGroupNew;
-import experiments.FishNew;
-import experiments.ImageAnalysis;
-import experiments.ImageAnalysisNew;
-import experiments.Measurement;
-import experiments.MeasurementNew;
+import Containers.Constants;
+import Containers.Old.ExperimentOld;
+import Containers.Experiment.Experiment;
+import Containers.Old.SubjectOld;
+import Containers.Old.GroupOld;
+import Containers.Experiment.ExperimentGroup;
+import Containers.Experiment.Subject;
+import Containers.Old.ImageAnalysisOls;
+import Containers.Experiment.ImageAnalysis;
+import Containers.Old.MeasurementOld;
+import Containers.Experiment.Measurement;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
@@ -42,15 +42,16 @@ import javax.swing.SwingUtilities;
  * @author janlu
  */
 public class Cropper implements Runnable{
-    ExperimentNew experiment;
-    ArrayList<ImageAnalysisNew> analysisList = new ArrayList();
+    Experiment experiment;
+    ArrayList<ImageAnalysis> analysisList = new ArrayList();
     MainMenuGUI parent;
     ArrayList<File> fileList = new ArrayList();
-    public Cropper(ExperimentNew experiment, MainMenuGUI parent) {
+    public Cropper(Experiment experiment, MainMenuGUI parent) {
         this.experiment = experiment;
         this.parent = parent;
     }
     
+    @Override
     public void run() {
         sendStartMessage();
         createAnalysisList();
@@ -59,13 +60,13 @@ public class Cropper implements Runnable{
     }
 
     private void createAnalysisList() {
-        for(FishGroupNew group : experiment.getGroups()) {
-            for (FishNew fish : group.getFishList()){
-                for (MeasurementNew measurement : fish.getMeasurements()) {
-                    ImageAnalysisNew tempAnalysis = null;
+        for(ExperimentGroup group : experiment.getGroups()) {
+            for (Subject fish : group.getSubjectList()){
+                for (Measurement measurement : fish.getMeasurements()) {
+                    ImageAnalysis tempAnalysis = null;
                     boolean hasFlattened = false;
                     boolean hasCropped = false;
-                    for (ImageAnalysisNew analysis : measurement.getAnalysisList()) {
+                    for (ImageAnalysis analysis : measurement.getAnalysisList()) {
                         if (analysis.isAnalysisType(Constants.ANALYSIS_FLATTENED)) {
                             hasFlattened = true;
                             tempAnalysis = analysis;
@@ -80,6 +81,7 @@ public class Cropper implements Runnable{
 
     private void performCropping() {
         RoiManager rm = new RoiManager();
+        
         for (int i = 0; i < analysisList.size(); i++) {
             rm.reset();
             Roi selection;
@@ -96,7 +98,7 @@ public class Cropper implements Runnable{
             initialImageX = image.getWidth();
             initialImageY = image.getHeight();
             image.show();
-            WaitForUserDialog dialog = new WaitForUserDialog("Select Fish");
+            WaitForUserDialog dialog = new WaitForUserDialog("Select subject outline");
             dialog.show();
             image.hide();
             selection = image.getRoi();
@@ -168,7 +170,7 @@ public class Cropper implements Runnable{
             IJ.save(image, saveString);
             image.changes = false;
             image.close();
-            ImageAnalysisNew croppedAnalysis = new ImageAnalysisNew(Constants.ANALYSIS_CROPPED, new File[]{new File(saveString)}, new int[] {-1}, Instant.now(), analysisList.get(i).getParent());
+            ImageAnalysis croppedAnalysis = new ImageAnalysis(Constants.ANALYSIS_CROPPED, new File[]{new File(saveString)}, new int[] {-1}, Instant.now(), analysisList.get(i).getParent());
             saveRoi(croppedAnalysis, selection);
             analysisList.get(i).getParent().addAnalysis(croppedAnalysis);
             
@@ -204,7 +206,7 @@ public class Cropper implements Runnable{
         });
     }
 
-    private void saveRoi(MeasurementNew measurement, Roi selection) {
+    private void saveRoi(Measurement measurement, Roi selection) {
         File roiPath = new File(measurement.getConfocalFile().getParent() + "\\ROIs\\" + measurement.getFileName() + "_FISHROI.roi");
         roiPath.getParentFile().mkdirs();
         if (!RoiEncoder.save(selection, roiPath.getAbsolutePath())) {
@@ -216,7 +218,7 @@ public class Cropper implements Runnable{
         };
         measurement.setFishROI(roiPath);
     }
-    private void saveRoi(ImageAnalysisNew analysis, Roi selection) {
+    private void saveRoi(ImageAnalysis analysis, Roi selection) {
         File roiPath = new File(analysis.getParent().getConfocalFile().getParent() + "\\ROIs\\" + analysis.getAnalysisName() + "_FISHROI.roi");
         roiPath.getParentFile().mkdirs();
         if (!RoiEncoder.save(selection, roiPath.getAbsolutePath())) {

@@ -111,6 +111,7 @@ public class MaximaFinderTweaked {
             IJ.log("Finding all peaks");
         }
         ArrayList<Voxel3DComparable> maximaTmp = FastFilters3DTweaked.getListMaxima(img, radXY, radXY, radZ, noiseTolerance, nbCpus, false);
+        
         Collections.sort(maximaTmp);
         for (Voxel3DComparable V : maximaTmp) {
             imagePeaks.setPixel(V, (float) V.getValue());

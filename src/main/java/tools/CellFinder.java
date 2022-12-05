@@ -2,17 +2,17 @@
 package tools;
 
 import GUI.MainMenuGUI;
-import experiments.Constants;
-import experiments.Experiment;
-import experiments.ExperimentNew;
-import experiments.Fish;
-import experiments.FishGroup;
-import experiments.FishGroupNew;
-import experiments.FishNew;
-import experiments.ImageAnalysis;
-import experiments.ImageAnalysisNew;
-import experiments.Measurement;
-import experiments.MeasurementNew;
+import Containers.Constants;
+import Containers.Old.ExperimentOld;
+import Containers.Experiment.Experiment;
+import Containers.Old.SubjectOld;
+import Containers.Old.GroupOld;
+import Containers.Experiment.ExperimentGroup;
+import Containers.Experiment.Subject;
+import Containers.Old.ImageAnalysisOls;
+import Containers.Experiment.ImageAnalysis;
+import Containers.Old.MeasurementOld;
+import Containers.Experiment.Measurement;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
@@ -30,11 +30,11 @@ import javax.swing.SwingUtilities;
  * @author Jan-Lukas Førde
  */
 public class CellFinder implements Runnable{
-    ExperimentNew experiment;
-    ArrayList<ImageAnalysisNew> analysisList = new ArrayList();
+    Experiment experiment;
+    ArrayList<ImageAnalysis> analysisList = new ArrayList();
     MainMenuGUI parent;
     ArrayList<File> fileList = new ArrayList();
-    public CellFinder(ExperimentNew experiment, MainMenuGUI parent) {
+    public CellFinder(Experiment experiment, MainMenuGUI parent) {
         this.experiment = experiment;
         this.parent = parent;
     }
@@ -47,13 +47,13 @@ public class CellFinder implements Runnable{
     }
 
     private void createAnalysisList() {
-        for(FishGroupNew group : experiment.getGroups()) {
-            for (FishNew fish : group.getFishList()){
-                for (MeasurementNew measurement : fish.getMeasurements()) {
-                    ImageAnalysisNew tempAnalysis = null;
+        for(ExperimentGroup group : experiment.getGroups()) {
+            for (Subject fish : group.getSubjectList()){
+                for (Measurement measurement : fish.getMeasurements()) {
+                    ImageAnalysis tempAnalysis = null;
                     boolean hasCounted = false;
                     boolean hasCropped = false;
-                    for (ImageAnalysisNew analysis : measurement.getAnalysisList()) {
+                    for (ImageAnalysis analysis : measurement.getAnalysisList()) {
                         if (analysis.isAnalysisType(Constants.ANALYSIS_CROPPED)) {
                             hasCropped = true;
                             tempAnalysis = analysis;
@@ -95,7 +95,7 @@ public class CellFinder implements Runnable{
             IJ.save(image, saveString);
             image.changes = false;
             image.close();
-            ImageAnalysisNew countedAnalysis = new ImageAnalysisNew(Constants.ANALYSIS_CELLSCOUNTED, new File[]{new File(saveString)}, new int[] {-1}, Instant.now(), analysisList.get(i).getParent());
+            ImageAnalysis countedAnalysis = new ImageAnalysis(Constants.ANALYSIS_CELLSCOUNTED, new File[]{new File(saveString)}, new int[] {-1}, Instant.now(), analysisList.get(i).getParent());
             countedAnalysis.setIntStorage(new int[] {selection.getPolygon().npoints});
             saveRoi(countedAnalysis,analysisList.get(i).getRois()[0], selection);
             analysisList.get(i).getParent().addAnalysis(countedAnalysis);
@@ -130,7 +130,7 @@ public class CellFinder implements Runnable{
         });
         
     }
-    private void saveRoi(ImageAnalysisNew analysis, File fishSelection, Roi cellSelection) {
+    private void saveRoi(ImageAnalysis analysis, File fishSelection, Roi cellSelection) {
         File roiPath = new File(analysis.getParent().getConfocalFile().getParent() + "\\ROIs\\" + analysis.getAnalysisName() + "_CellROI.roi");
         roiPath.getParentFile().mkdirs();
         if (!RoiEncoder.save(cellSelection, roiPath.getAbsolutePath())) {

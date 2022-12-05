@@ -5,11 +5,11 @@
  */
 package tools;
 
-import experiments.Constants;
-import experiments.Experiment;
-import experiments.Fish;
-import experiments.FishGroup;
-import experiments.Measurement;
+import Containers.Constants;
+import Containers.Old.ExperimentOld;
+import Containers.Old.SubjectOld;
+import Containers.Old.GroupOld;
+import Containers.Old.MeasurementOld;
 import java.io.File;
 import java.time.Instant;
 import java.util.HashMap;
@@ -19,7 +19,7 @@ import java.util.HashMap;
  * @author janlu
  */
 public class ExperimentImportCreated {
-    Experiment experiment;
+    ExperimentOld experiment;
     File confocalDir;
     String name;
     Instant timeOfFertilization;
@@ -32,10 +32,10 @@ public class ExperimentImportCreated {
         this.timeOfFertilization = timeOfFertilization;
         this.timeOfInjection = timeOfInjection;
     }
-    public Experiment createExperiment() {
+    public ExperimentOld createExperiment() {
         constructHashMap();
         if (groupMap.isEmpty()) return null;
-        experiment = new Experiment(name, confocalDir, timeOfFertilization, timeOfInjection, groupMap);
+        experiment = new ExperimentOld(name, confocalDir, timeOfFertilization, timeOfInjection, groupMap);
         addAnalyses();
         return experiment;
     }
@@ -82,9 +82,9 @@ public class ExperimentImportCreated {
 
     private void addAnalyses() {
         File flattenedDir = new File(confocalDir.getAbsoluteFile() + "\\ProcessedFiles\\Flattened");
-        for (FishGroup group : experiment.getGroups()) {
-            for (Fish fish : group.getFishList()) {
-                for (Measurement measurement : fish.getMeasurements()) {
+        for (GroupOld group : experiment.getGroups()) {
+            for (SubjectOld fish : group.getFishList()) {
+                for (MeasurementOld measurement : fish.getMeasurements()) {
                     for (File groupDir : flattenedDir.listFiles()) {
                         for (File fishDir : groupDir.listFiles()) {
                             for (File measurementDir : fishDir.listFiles()) {

@@ -5,7 +5,9 @@
  */
 package tools;
 
-import experiments.Experiment;
+import Containers.Cells.CellDay;
+import Containers.Cells.CellGroup;
+import Containers.Old.ExperimentOld;
 import ij.IJ;
 import java.io.File;
 import java.io.FileWriter;
@@ -29,9 +31,9 @@ import util.opencsv.CSVWriter;
 public class CellPositionExporter {
     ArrayList<CellGroup> cellGroups;
     IntervalMarker[] markers;
-    Experiment experiment;
+    ExperimentOld experiment;
     
-    public CellPositionExporter(ArrayList<CellGroup> cellGroups, IntervalMarker[] markers, Experiment experiment) {
+    public CellPositionExporter(ArrayList<CellGroup> cellGroups, IntervalMarker[] markers, ExperimentOld experiment) {
         this.cellGroups = cellGroups;
         this.markers = markers;
         this.experiment = experiment;

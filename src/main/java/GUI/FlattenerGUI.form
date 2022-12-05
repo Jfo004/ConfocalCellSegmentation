@@ -43,7 +43,6 @@
                           <Component id="tileSizeSelector" min="-2" max="-2" attributes="0"/>
                           <Component id="projectionMethodSelector" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -98,9 +97,10 @@
     <Component class="javax.swing.JComboBox" name="tileSizeSelector">
       <Properties>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-          <StringArray count="2">
-            <StringItem index="0" value="1024"/>
-            <StringItem index="1" value="2048"/>
+          <StringArray count="3">
+            <StringItem index="0" value="None"/>
+            <StringItem index="1" value="1024"/>
+            <StringItem index="2" value="2048"/>
           </StringArray>
         </Property>
       </Properties>

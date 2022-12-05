@@ -1,22 +1,27 @@
 package tools;
 
 
+import importexport.ImageImporter;
+import importexport.ImageImporterFactory;
+import GUI.MainMenuGUI;
+import Containers.Constants;
+import Containers.Experiment.Experiment;
+import Containers.Experiment.ExperimentGroup;
+import Containers.Experiment.Subject;
+import Containers.Experiment.ImageAnalysis;
+import Containers.Experiment.Measurement;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.gui.GenericDialog;
-import ij.gui.WaitForUserDialog;
-import ij.io.DirectoryChooser;
-import ij.io.OpenDialog;
 import ij.measure.Calibration;
-import ij.plugin.ChannelSplitter;
 import ij.plugin.ZProjector;
-import ij.plugin.frame.ContrastAdjuster;
 import ij.process.LUT;
+import java.awt.Color;
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Properties;
+import java.util.stream.IntStream;
+import javax.swing.SwingUtilities;
 
 
 
@@ -30,405 +35,152 @@ import java.util.Properties;
  *Class to flatten image stacks.
  * @author janlu
  */
-public class Flattener {
-    int tileSize;
-    boolean isDirectory;
-    String targetLocation;
-    String outputLocation;
-    int zProjectionMethod;
-    boolean nameChannels;
-    boolean makeComposite;
-    int calibrationImage;
-    double[][] channelIntensities;
-    double[][] compositeIntensities;
-    boolean doIntensityCalibration;
-    boolean userCalibration;
-    private OLDIMSImporter iI;
+public class Flattener implements Runnable{
+    private int tileSize;
+    private String outputDirectory;
+    private int zProjectionMethod;
+    private ImageImporter imageImporter;
     private int nFiles;
-    private String[] pMethodS = new String[] {"Maximum", "Average", "Median", "Sum"};
-    private int[] pMethodV = new int[] {ZProjector.MAX_METHOD, ZProjector.AVG_METHOD, ZProjector.MEDIAN_METHOD, ZProjector.SUM_METHOD};
-    private boolean wasCanceled = false;
+    private Experiment experiment;
+    private MainMenuGUI parent;
+    private ArrayList<Measurement> measurementList = new ArrayList();
+    private ArrayList<File> processedFiles = new ArrayList();
+    private File outputDirectoryFile;
+    private volatile boolean abort = false;
+    int [] channelIDs;
     
-    
-    // TODO implement cancle
-    // TEST manual calibration
-    // TODO make code a bit prettier
-    // TODO implement choose files
-    //TODO store standard directories in IJ
-    // TODO automatic switch to slow algorithm for focuser?
-    
-    public Flattener() {
-        GenericDialog optionsDialog = new GenericDialog("Flatten confocal stack");
-        optionsDialog.addRadioButtonGroup("",new String[] {"Single file", "Directory"} , 1, 2, "Directory");
-        optionsDialog.addChoice("Projection method (F)", pMethodS, "Maximum");
-        optionsDialog.addNumericField("Tile size (-1 to disable)", 1024);
-        optionsDialog.addRadioButtonGroup("Intensity calibration", new String[]{"None", "Manual", "Values"}, 1, 3, "None");
-        optionsDialog.addCheckboxGroup(1, 2, new String[] {"Create channel composite", "Name Channels"}, new boolean[] {true, true});
-        optionsDialog.showDialog();
-        if (optionsDialog.wasCanceled()) {
-            wasCanceled = true;
-            return;
-        }
-        
-        //creating importer
-        boolean isDir = ("Directory".equals(optionsDialog.getNextRadioButton()));
-        String dir;
-        if (isDir) {
-           DirectoryChooser dCInput = new DirectoryChooser("Select input directory");
-           dir = dCInput.getDirectory();
-        }
-        else {
-            OpenDialog oD = new OpenDialog("Select file");
-            dir = oD.getPath();
-        }
-        if (dir == null) {
-            wasCanceled = true; 
-            return;
-        }
-        iI = new OLDIMSImporter(isDir, dir);
-        iI.prepareImportImaris();
-        this.nFiles = iI.getNumberOfImages();
-        this.channelIntensities = new double[iI.nChannels()][2];
-        this.compositeIntensities = new double[iI.nChannels()][2];
-        DirectoryChooser dCOut = new DirectoryChooser("Select output directory");
-        outputLocation = dCOut.getDirectory();
-        
-        //storing variables
-        zProjectionMethod = pMethodV[optionsDialog.getNextChoiceIndex()];
-        tileSize = (int) optionsDialog.getNextNumber();
-        String tempString = optionsDialog.getNextRadioButton();
-        makeComposite = optionsDialog.getNextBoolean();
-        nameChannels = optionsDialog.getNextBoolean();
-        
-        //No intensity calibration
-        if ("None".equals(tempString)) {
-            doIntensityCalibration = false;
-            userCalibration = false;
-            flattenArray(true);
-            return;
-        }
-                
-        //Doing intensity calibration manual
-        if ("Manual".equals(tempString)) {
-            userCalibration = true;
-            doIntensityCalibration = true;
-            GenericDialog calibrationDialog = new GenericDialog("Select all positive image");
-            calibrationDialog.addChoice("Calibration image:", iI.getFileNames(), iI.getFileNames()[0]);
-            calibrationDialog.showDialog();
-            calibrationImage = calibrationDialog.getNextChoiceIndex();
-            doUserCalibration(true);
-            flattenArray(true);
-            return;
-        }
-        
-        //Doing intensity calibration by values
-        userCalibration = false;
-        doIntensityCalibration = true;
-        GenericDialog calibrationDialog = new GenericDialog("enter channel intensities");
-        int nChannels = iI.nChannels();
-        for (int i = 0; i < nChannels; i++) {
-            calibrationDialog.addNumericField("Channel " + (i+1) + ": Min", 0);
-            calibrationDialog.addToSameRow();
-            calibrationDialog.addNumericField("Max", 0);
-        }
-        calibrationDialog.showDialog();
-        if (calibrationDialog.wasCanceled()) {
-            wasCanceled = true;
-            return;
-        }
-        for (int i = 0; i < nChannels; i++) {
-            channelIntensities[i][0] = calibrationDialog.getNextNumber();
-            channelIntensities[i][1] = calibrationDialog.getNextNumber();
-        }
-        if (!makeComposite) {
-            flattenArray(true);
-            return;
-        }
-        GenericDialog calibrationDialogComp = new GenericDialog("enter composite intensities");
-        for (int i = 0; i < nChannels; i++) {
-            calibrationDialogComp.addNumericField("Channel " + (i+1) + ": Min", 0);
-            calibrationDialogComp.addToSameRow();
-            calibrationDialogComp.addNumericField("Max", 0);
-        }
-        calibrationDialogComp.showDialog();
-        if (calibrationDialogComp.wasCanceled()) {
-            wasCanceled = true;
-            return;
-        }
-        for (int i = 0; i < nChannels; i++) {
-            compositeIntensities[i][0] = calibrationDialogComp.getNextNumber();
-            compositeIntensities[i][1] = calibrationDialogComp.getNextNumber();
-        }
-        flattenArray(true); 
-    }
     
      /**
-     * Construct flattener with pre-determined parameters. Intensity values for 
-     * channels given.
+     * Construct flattener with pre-determined parameters.
+ is performed
      * @param targetLoc Location of directory / file
-     * @param outLoc output directory
+     * @param outputDirectory
+     * @param zProjectionMethod
      * @param isDir True if location is a directory
-     * @param pMethod projection method to be used by ZProjector
      * @param tileSize Tile size of mosaic
-     * @param nameChannels True if channels should be named individually
-     * @param makeComp True if a composite of all channels should be constructed
-     * @param channelInt array of min/max intensities for each channel 
-     * [channel index] [min = 0, max = 1]
-     * @param compInt array of min/max intensities in composite
      */
-    public Flattener(String targetLoc, String outLoc, boolean isDir, int pMethod, int tileSize, boolean nameChannels, boolean makeComp, double[][] channelInt, double[][] compInt) {
-        this.targetLocation = targetLoc;
-        this.outputLocation = outLoc;
-        this.nameChannels = nameChannels;
-        this.isDirectory = isDir;
-        this.zProjectionMethod = pMethod;
+//    public Flattener(String targetLoc, String outputDirectory, boolean isDir, int zProjectionMethod, int tileSize) {
+//        this(new IMSImporter(isDir, targetLoc), outputDirectory, zProjectionMethod, tileSize);
+//    }
+//    
+//    
+//    /**
+//     * 
+//     * @param iI
+//     * @param outputDirectory
+//     * @param zProjectionMethod
+//     * @param tileSize 
+//     */
+//    public Flattener(IMSImporter iI, String outputDirectory, int zProjectionMethod, int tileSize) {
+//        this.imageImporter = iI;
+//        this.tileSize = tileSize;
+//        this.zProjectionMethod = zProjectionMethod;
+//        this.outputDirectory = outputDirectory;
+//        this.nFiles = iI.getNumberOfImages();
+//        flattenArray(true);
+//        
+//    }
+
+    public Flattener(Experiment experiment, MainMenuGUI parent, int tileSize, int projectionMethod) {
+        this.zProjectionMethod = projectionMethod;
         this.tileSize = tileSize;
-        this.nameChannels = nameChannels;
-        this.makeComposite = makeComp;
-        this.channelIntensities = channelInt;
-        this.compositeIntensities = compInt;
-        this.userCalibration = false;
-        this.doIntensityCalibration = true;
-        this.nFiles = iI.getNumberOfImages();
-        
+        this.experiment = experiment;
+        this.parent = parent;
     }
     
-    /**
-     * Construct flattener with pre-determined parameters. user performs intensity
-     * calibration.
-     * @param targetLoc Location of directory / file
-     * @param outLoc output directory
-     * @param isDir True if location is a directory
-     * @param pMethod projection method to be used by ZProjector
-     * @param tileSize Tile size of mosaic
-     * @param nameChannels True if channels should be named individually
-     * @param makeComp True if a composite of all channels should be constructed
-     * @param calImg Index of calibration image
-     */
-    public Flattener(String targetLoc, String outLoc, boolean isDir, int pMethod, int tileSize, boolean nameChannels, boolean makeComp, int calImg)  {
-        this.outputLocation = outLoc;
-        this.zProjectionMethod = pMethod;
-        this.tileSize = tileSize;
-        this.nameChannels = nameChannels;
-        this.makeComposite = makeComp;
-        this.calibrationImage = calImg;
-        this.doIntensityCalibration = true;
-        this.userCalibration = true;
-        this.iI = new OLDIMSImporter(isDir, targetLoc);
-        this.iI.prepareImportImaris();
-        this.nFiles = iI.getNumberOfImages();
-        doUserCalibration(true);
-    }
-    
-     /**
-     * Construct flattener with pre-determined parameters. no intensity calibration
-     * is performed
-     * @param targetLoc Location of directory / file
-     * @param outLoc output directory
-     * @param isDir True if location is a directory
-     * @param pMethod projection method to be used by ZProjector
-     * @param tileSize Tile size of mosaic
-     * @param nameChannels True if channels should be named individually
-     * @param makeComp True if a composite of all channels should be constructed
-     */
-    public Flattener(String targetLoc, String outLoc, boolean isDir, int pMethod, int tileSize, boolean nameChannels, boolean makeComp) {
-        this.outputLocation = outLoc;
-        this.zProjectionMethod = pMethod;
-        this.tileSize = tileSize;
-        this.nameChannels = nameChannels;
-        this.makeComposite = makeComp;
-        this.doIntensityCalibration = false;
-        this.userCalibration = false;
-        this.iI = new OLDIMSImporter(isDir, targetLoc);
-        this.iI.prepareImportImaris();
-        this.nFiles = iI.getNumberOfImages();
+    @Override
+    public void run() {
+        sendStartMessage();
+        flattenExperiment();
     }
     
     /**
      * Flattens input images and stores results to disk.
      * @param giveFeedback 
      */    
-    public void flattenArray(boolean giveFeedback) {
+    private void flattenArray() {
         
         if (nFiles < 1) {
             IJ.showMessage("No images found");
             return;
         }
-        CompositeImage[] channelArray;
         
         for (int i = 0; i < nFiles; i++) {
-            // skips image used in calibration
-            if ((i == calibrationImage) && userCalibration) continue; 
-            
-            if(giveFeedback) IJ.showStatus("Importing image " + (i + 1) + " of " + nFiles);
-            ImagePlus imp = iI.getImp(i);
-            
-            if(giveFeedback) IJ.showStatus("Flattening image " + (i + 1) + " of " + nFiles);
-            channelArray = flattenHyperstack(imp, tileSize, zProjectionMethod, nameChannels, makeComposite);
-            imp.changes = false;
-            imp.close();
-            
-            if(giveFeedback) IJ.showStatus("Saving image " + (i + 1) + " of " + nFiles);
-            for(int j = 0; j < channelArray.length; j++) {
+                        
+            int nChannels = imageImporter.nChannels(i);
+            ImagePlus[] channelArray = new ImagePlus[nChannels];
+            String imageTitle = imageImporter.getFileName(i);
+            int totalFiles = (nChannels == 1) ? 1 : nChannels + 1;
+            channelIDs = IntStream.range(0, totalFiles).toArray();
+            for (int j = 0; j < nChannels; j++) {
+                sendFileUpdateMessage(j, totalFiles);
+                ImagePlus imp = imageImporter.getChannel(i,j, 0);
+                Color lutColor;
+                switch (experiment.getChannelColors()[j]) {
+                    case "Gray":
+                        lutColor = Color.GRAY;
+                        break;
+                    case "Red":
+                        lutColor = Color.RED;
+                        break;
+                    
+                    case "Green":
+                        lutColor = Color.GREEN;
+                        break;
+                    case "Blue":
+                        lutColor = Color.BLUE;
+                        break;
+                    case "Yellow":
+                        lutColor = Color.YELLOW;
+                        break;
+                    case "Cyan":
+                        lutColor = Color.CYAN;
+                        break;
+                    case "Magenta":
+                        lutColor = Color.MAGENTA;
+                        break;
+                    default:
+                        lutColor = Color.GRAY;
+                }
+                System.out.println(lutColor.toString());
+                imp.setLut(LUT.createLutFromColor(lutColor));
                 
-                if(doIntensityCalibration) {
-                    if (makeComposite && (j == (channelArray.length - 1))) {
-                        for (int k = 0; k < channelArray[j].getNChannels(); k++) {
-                            channelArray[j].setC(k+1);
-                            channelArray[j].setDisplayRange(compositeIntensities[k][0],compositeIntensities[k][1]);
-                        }
-                    }
-                    else {
-                        channelArray[j].setDisplayRange(channelIntensities[j][0], channelIntensities[j][1]);
-                    }
+                //Processing channels
+                if (j == experiment.getBfChannel()) {
+                    channelArray[j] = focusBF(imp, tileSize);
+                    channelArray[j].setTitle(imageTitle + "_Channel " + j + "_BF");
                 }
                 
-                if(channelArray[j].getNChannels() > 1) {
-                IJ.saveAsTiff(channelArray[j], outputLocation + channelArray[j].getTitle());
-                }
                 else {
-                //Issue with loosing LUT in single channel comp on save
-                LUT tempLUT = channelArray[j].getChannelLut();
-                Calibration tempCal = channelArray[j].getCalibration();
-                ImagePlus tempImg = new ImagePlus(channelArray[j].getTitle(), channelArray[j].getChannelProcessor());
-                tempImg.setLut(tempLUT);
-                tempImg.setCalibration(tempCal);
-                IJ.saveAsTiff(tempImg, outputLocation + channelArray[j].getTitle());
+                    channelArray[j] = doZProjection(imp, zProjectionMethod);
+                    channelArray[j].setTitle(imageTitle + "_Channel " + j);
                 }
+                String saveString = outputDirectory + "\\" + channelArray[j].getTitle();
+                if (!saveString.endsWith(".tif")) saveString = saveString.concat(".tif");
+                IJ.saveAsTiff(channelArray[j], saveString);
+                processedFiles.add(new File(saveString));
             }
-            if(giveFeedback) IJ.showProgress(i, nFiles);
-        }
-        if(giveFeedback) IJ.showStatus("Done");
-    }
-    
-    private void doUserCalibration(boolean giveFeedback) {
-        //Do intensity calibration
-        // save image 
             
-        if(giveFeedback) IJ.showStatus("Importing image calibration image");
-        ImagePlus imp = iI.getImp(calibrationImage);
-        CompositeImage[] channelArray;
-
-        if(giveFeedback) IJ.showStatus("Flattening calibration image");
-        channelArray = flattenHyperstack(imp, tileSize, zProjectionMethod, nameChannels, makeComposite);
-        imp.changes = false;
-        imp.close();
-        
-        ContrastAdjuster cA = new ContrastAdjuster();
-        cA.run("");
-        WaitForUserDialog waitDialog = new WaitForUserDialog("Adjust channels");
-        for(int i = 0; i < channelArray.length; i++) {
-            //Show image, set intensity and store settings
-            channelArray[i].show();
-            waitDialog.show();
-            channelArray[i].hide();
-                     
-            
-            //Storing Intensity range
-            if ((i == channelArray.length -1) && makeComposite && (channelArray[i].getNChannels() > 1)) {
-                for (int j = 0; j < channelArray[i].getNChannels(); j++) {
-                    channelArray[i].setC(j+1);
-                    compositeIntensities[j][0] = channelArray[i].getDisplayRangeMin();
-                    compositeIntensities[j][1] = channelArray[i].getDisplayRangeMax();
+            //Make and save comp if more that 1 channel
+            if (nChannels > 1) {
+                channelIDs[channelIDs.length - 1] = -1;
+                ImageStack iStack = new ImageStack();
+                
+                for (ImagePlus channel : channelArray) {
+                    iStack.addSlice(channel.getProcessor());
                 }
-            }
-            else {
-                 channelIntensities[i][0] = channelArray[i].getDisplayRangeMin();
-                 channelIntensities[i][1] = channelArray[i].getDisplayRangeMax();
-            }  
-            
-            //Saving channel
-            if(channelArray[i].getNChannels() > 1) {
-                IJ.saveAsTiff(channelArray[i], outputLocation + channelArray[i].getTitle());
-            }
-            else {
-            //Issue with loosing LUT in single channel comp on save
-            LUT tempLUT = channelArray[i].getChannelLut();
-            Calibration tempCal = channelArray[i].getCalibration();
-            //Properties tempProp = channelArray[i].getProperties(); FIX properties for single channel?
-            ImagePlus tempImg = new ImagePlus(channelArray[i].getTitle(), channelArray[i].getChannelProcessor());
-            tempImg.setLut(tempLUT);
-            tempImg.setCalibration(tempCal);
-            IJ.saveAsTiff(tempImg, outputLocation + channelArray[i].getTitle());
-            }
-        } 
-        cA.setVisible(false);
-        cA.close();
-    }
-    
-    /**
-     * Flattens hyperstack and returns an array of composite images
-     * @param inImp the hyperstack to be flattened
-     * @param tileSize tile size if image is mosaic of multiple images during 
-     * aquisition. set to 0 if unknown / image is not a mosaic (disables clean-up
-     * before BF-focusing
-     * @param projectionMethod Projection method for Z-projection
-     * @param nameChannels Change title of images to reflect channel
-     * @param makeChannelComp add an aditional composite image of all channels
-     * to the last place in the array.
-     * @param deleteImp If true, the ImagePlus will be deleted after import to 
-     * save memory.
-     * @return 
-     */
-    public static CompositeImage[] flattenHyperstack(ImagePlus inImp, int tileSize, int projectionMethod, Boolean nameChannels, Boolean makeChannelComp) {
-        
-        CompositeImage[] compositeStack = new CompositeImage[(makeChannelComp) ? inImp.getNChannels() + 1 : inImp.getNChannels()];
-        String inImpTitle = inImp.getTitle();
-        int bfChannels = (int)inImp.getProperty("BFChannels");
-        ImagePlus[] channelArray = ChannelSplitter.split(inImp);
-        ArrayList<Integer> bfList = new ArrayList<Integer>();
-        inImp.changes = false;
-        inImp.close();
-        
-        //Flattening channel stacks
-        for (int i = 0; i < channelArray.length; i++) {
-            ImagePlus tempImp;
-            // If the stack is a BF channel
-            if ((((1 << i) & bfChannels) >> i) == 1 ) {
-                bfList.add(i);
-            }
-            // if the stack is not a BF channel
-            else {
-                tempImp = doZProjection(channelArray[i], projectionMethod);
-                channelArray[i].changes = false;
-                channelArray[i].close();
-                channelArray[i] = tempImp;
-                if (nameChannels) {
-                    channelArray[i].setTitle(inImpTitle + "_Channel " + i);
+                CompositeImage comp = new CompositeImage(new ImagePlus(imageTitle + "_Comp", iStack), CompositeImage.COMPOSITE);
+                comp.setCalibration(channelArray[0].getCalibration());
+                for (int j = 0; j < nChannels; j++) {
+                    comp.setChannelLut(channelArray[j].getLuts()[0], j+1);
                 }
-                else {
-                    channelArray[i].setTitle(inImpTitle);
-                }
+                String saveString = outputDirectory + "\\" + comp.getTitle();
+                if (!saveString.endsWith(".tif")) saveString = saveString.concat(".tif");
+                IJ.saveAsTiff(comp, saveString);
+                processedFiles.add(new File(saveString));
+                sendFileUpdateMessage(totalFiles, totalFiles);
             }
-            LUT tempLut = channelArray[i].getLuts()[0];
-            compositeStack[i] = new CompositeImage(channelArray[i]);
-            compositeStack[i].setChannelLut(tempLut);
-            compositeStack[i].setProperty("BFChannels", 0);
         }
-        
-        //Delay memory intensive focusing as dealing with z-stacks first frees memory
-        for (int i : bfList) {                
-            channelArray[i] = focusBF(channelArray[i], tileSize);
-            if (nameChannels) {
-                channelArray[i].setTitle(inImpTitle + "_Channel " + i + "_BF");
-            }
-            else {
-                channelArray[i].setTitle(inImpTitle);
-            }
-            LUT tempLut = channelArray[i].getLuts()[0];
-            compositeStack[i] = new CompositeImage(channelArray[i]);
-            compositeStack[i].setChannelLut(tempLut);
-            compositeStack[i].setProperty("BFChannels", 1);
-        }
-        
-        //Adding Channel comp if selected
-        if (makeChannelComp) {
-            int lastIdx = compositeStack.length - 1;
-            String compTitle = inImpTitle + "_Comp";
-            compositeStack[lastIdx] = makeChannelComp(Arrays.copyOfRange(channelArray, 0,lastIdx), compTitle);
-            compositeStack[lastIdx].setProperty("BFChannels", bfChannels);
-        }
-        return compositeStack;
     }
     
     /**
@@ -439,6 +191,7 @@ public class Flattener {
      */
     public static ImagePlus focusBF(ImagePlus BFImp, int tileSize) {
         //Storing name and calibration
+        LUT tempLut = BFImp.getLuts()[0];
         String tempTitle = BFImp.getTitle();
         Calibration tempCal = BFImp.getCalibration();
         ImageStack BFStack = BFImp.getStack();
@@ -505,9 +258,11 @@ public class Flattener {
         
         //Focusing stack
         Stack_Focuser_ sf = new Stack_Focuser_();
+        
         sf.focusBF(BFImp, 11);
         BFImp.setTitle(tempTitle);
         BFImp.setCalibration(tempCal);
+        BFImp.setLut(tempLut);
         return BFImp;
     }
     
@@ -542,37 +297,106 @@ public class Flattener {
     public static ImagePlus doZProjection(ImagePlus Imp){
         return doZProjection(Imp, ZProjector.MAX_METHOD);
     }
-    
-    /**
-     * Merging single slice images to composite image
-     * @param channelArray Array of channel images
-     * @param compTitle Title of returned comp
-     * @return composite image of channels
-     */
-    public static CompositeImage makeChannelComp(ImagePlus[] channelArray, String compTitle) {
-        ImagePlus tempImp;
-        CompositeImage channelComp;
+
+    private void flattenExperiment() {
+        createMeasurementList();
+        if (measurementList.isEmpty()) {
+            sendStopMessage("Flatten - No measurements flattend");
+            return;
+        }
+        String fileDirectoryString = measurementList.get(0).getConfocalFile().getParent() + "\\ProcessedFiles\\Flattened";
+        outputDirectoryFile = new File(fileDirectoryString);
         
-        // merging images in single comp if there are more than one images
-        if (channelArray.length > 1) {
-            ImageStack channelCompStack = new ImageStack(channelArray[0].getWidth(), channelArray[0].getHeight());
-            Calibration tempCal = channelArray[0].getCalibration().copy();
-            for (ImagePlus channelImg : channelArray) {
-                channelCompStack.addSlice(channelImg.getProcessor());
+        for (Measurement measurement : measurementList) {
+            sendUpdateMessage(measurement.getConfocalFile().getName(), measurementList.indexOf(measurement), measurementList.size());
+            flattenMeasurement(measurement);
+            if (Thread.interrupted()) {
+                sendStopMessage("Flatten - aborted");
+                return;
             }
-            tempImp = new ImagePlus(compTitle, channelCompStack);
-            channelComp = new CompositeImage(tempImp, CompositeImage.COMPOSITE);
-            channelComp.setCalibration(tempCal);
-            for (int j = 0; j < channelArray.length; j++) {
-                channelComp.setChannelLut(channelArray[j].getLuts()[0], j+1);
-            }                    
         }
-        else {
-            channelComp = new CompositeImage(channelArray[0]);
-            channelComp.setTitle(compTitle);
-            channelComp.setLut(channelArray[0].getLuts()[0]);
-        }
-        return channelComp;
+        sendStopMessage("Flatten"); 
     }
+
+    private void createMeasurementList() {
+        for (ExperimentGroup fishGroup : experiment.getGroups()) {
+            for (Subject fish : fishGroup.getSubjectList()) {
+                for (Measurement measurement : fish.getMeasurements()) {
+                    boolean completed = false;
+                    for (ImageAnalysis analysis : measurement.getAnalysisList()) {
+                        if (analysis.isAnalysisType(Constants.ANALYSIS_FLATTENED)){
+                            completed = true;
+                        } 
+                    }
+                    if (!completed) measurementList.add(measurement);
+                }
+            }
+        }
+    }
+
+    private void flattenMeasurement(Measurement measurement) {
+        imageImporter = ImageImporterFactory.createImporter(measurement.getFileType());
+        imageImporter.setImport(measurement.getConfocalFile());
+        nFiles = 1;
+        outputDirectory = outputDirectoryFile.getAbsolutePath() 
+                + "\\" + measurement.getParent().getParentFishGroup().getGroupName() 
+                + "\\" + measurement.getParent().getName()
+                + "\\" + measurement.getFileName();
+        
+        File makeDir = new File(outputDirectory);
+        System.out.println("OutputDir: " + makeDir.getAbsolutePath());
+        makeDir.setWritable(true, false);
+        System.out.println( "make file: " + makeDir.mkdirs());
+        makeDir.setWritable(true, false);
+        outputDirectory = makeDir.getAbsolutePath();
+        processedFiles.clear();
+        flattenArray();
+        measurement.addAnalysis(Constants.ANALYSIS_FLATTENED, processedFiles.toArray(new File[0]), channelIDs);
+        sendSaveMessage();
+        try{
+            Thread.sleep(1000);
+        }
+        catch(InterruptedException e){
+            Thread.currentThread().interrupt();
+        }
+        
+    }
+    
+    private void sendStartMessage() {
+        SwingUtilities.invokeLater( new Runnable() {
+            public void run() {
+                parent.setTask("Flatten", Constants.TASK_FLATTENING);
+            }
+        });
+    }
+    private void sendUpdateMessage(String fileName, int progress, int total) {
+        SwingUtilities.invokeLater( new Runnable() {
+            public void run() {
+                parent.setProgress(fileName, progress, total);
+            }
+        });
+    }
+    private void sendFileUpdateMessage(int progress, int total) {
+        SwingUtilities.invokeLater( new Runnable() {
+            public void run() {
+                parent.setFileProgress(progress, total);
+            }
+        });
+    }
+    private void sendStopMessage(String message) {
+        SwingUtilities.invokeLater( new Runnable() {
+            public void run() {
+                parent.finishTask(message);
+            }
+        });
+    }
+    private void sendSaveMessage() {
+        SwingUtilities.invokeLater( new Runnable() {
+            public void run() {
+                parent.saveExperiment();
+            }
+        });
+    }
+    
     
 }

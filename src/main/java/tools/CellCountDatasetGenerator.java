@@ -5,6 +5,7 @@
  */
 package tools;
 
+import Containers.Cells.CellGroup;
 import GUI.CellAnalysisGUI;
 import java.util.ArrayList;
 import javax.swing.SwingUtilities;

@@ -1,51 +1,35 @@
 
 package GUI;
 
-import experiments.Experiment;
-import experiments.ExperimentNew;
-import experiments.Fish;
-import experiments.FishGroup;
-import experiments.FishGroupNew;
-import experiments.FishNew;
-import experiments.ImageAnalysis;
-import experiments.ImageAnalysisNew;
-import experiments.Measurement;
-import experiments.MeasurementNew;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.time.Instant;
+import Containers.Experiment.Experiment;
+import Containers.Experiment.ExperimentGroup;
+import Containers.Experiment.Subject;
+import Containers.Experiment.ImageAnalysis;
+import Containers.Experiment.Measurement;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import tools.AutomaticCellFinder;
-import tools.CellAnalysator;
-import tools.CellFinder;
 import tools.ContrastAdjuster;
 import tools.Cropper;
-import tools.ExperimentExporterXML;
-import tools.ExperimentImporter;
-import tools.ExperimentXMLConverter;
+import importexport.ExperimentExporterXML;
+import importexport.ExperimentImporter;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import tools.CellExporter;
+import tools.CellImporterCSV;
 import tools.MontageCreator;
-import tools.OptiFlattener;
+import tools.Flattener;
 
 /**
  *
  * @author janlu
  */
 public class MainMenuGUI extends javax.swing.JFrame {
-    private ExperimentNew experiment;
-    private OptiFlattener flattener;
-    private int ongoingOperation = 0;
+    private Experiment experiment;
+    private Flattener flattener;
     private Thread workThread;
             
     /**
@@ -64,31 +48,26 @@ public class MainMenuGUI extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jPopupMenu1 = new javax.swing.JPopupMenu();
+        jPopupMenu2 = new javax.swing.JPopupMenu();
         experimentInformationPanel = new javax.swing.JPanel();
         nameLabel = new javax.swing.JLabel();
-        injectionDateLabel = new javax.swing.JLabel();
         groupCountLabel = new javax.swing.JLabel();
-        fishCountLabel = new javax.swing.JLabel();
+        subjectCountLabel = new javax.swing.JLabel();
         confocalCountLabel = new javax.swing.JLabel();
         nameField = new javax.swing.JLabel();
-        injectionDateField = new javax.swing.JLabel();
         groupCountField = new javax.swing.JLabel();
         fishCountField = new javax.swing.JLabel();
         confocalCountField = new javax.swing.JLabel();
-        newExperimentButton = new javax.swing.JButton();
-        openExperimentButton = new javax.swing.JButton();
-        convertButton = new javax.swing.JButton();
         actionPanel = new javax.swing.JPanel();
-        refreshButton = new javax.swing.JButton();
         flattenImagesButton = new javax.swing.JButton();
         traceFishButton = new javax.swing.JButton();
-        countCellsButton = new javax.swing.JButton();
         adjustContrastButton = new javax.swing.JButton();
         makeMontageButton = new javax.swing.JButton();
         SegmentCellsButton = new javax.swing.JButton();
-        analyzeCellsButton = new javax.swing.JButton();
-        cellChannelSpinner = new javax.swing.JSpinner();
-        jLabel5 = new javax.swing.JLabel();
+        exportObjectsButton = new javax.swing.JButton();
+        openExperimentButton = new javax.swing.JButton();
+        newExperimentButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         experimentTree = new javax.swing.JTree();
         progressBar = new javax.swing.JProgressBar();
@@ -113,17 +92,13 @@ public class MainMenuGUI extends javax.swing.JFrame {
 
         nameLabel.setText("Experiment name:");
 
-        injectionDateLabel.setText("Injection date:");
-
         groupCountLabel.setText("Groups:");
 
-        fishCountLabel.setText("Fish:");
+        subjectCountLabel.setText("Subjects:");
 
-        confocalCountLabel.setText("Confocal images:");
+        confocalCountLabel.setText("Images:");
 
         nameField.setText("None");
-
-        injectionDateField.setText("None");
 
         groupCountField.setText("0");
 
@@ -131,100 +106,56 @@ public class MainMenuGUI extends javax.swing.JFrame {
 
         confocalCountField.setText("0");
 
-        newExperimentButton.setText("New Experiment");
-        newExperimentButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newExperimentButtonActionPerformed(evt);
-            }
-        });
-
-        openExperimentButton.setText("Open Experiment");
-        openExperimentButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                openExperimentButtonActionPerformed(evt);
-            }
-        });
-
-        convertButton.setText("Convert .exp");
-        convertButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                convertButtonActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout experimentInformationPanelLayout = new javax.swing.GroupLayout(experimentInformationPanel);
         experimentInformationPanel.setLayout(experimentInformationPanelLayout);
         experimentInformationPanelLayout.setHorizontalGroup(
             experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(experimentInformationPanelLayout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(nameLabel)
-                    .addComponent(injectionDateLabel, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(experimentInformationPanelLayout.createSequentialGroup()
-                            .addGap(10, 10, 10)
-                            .addComponent(fishCountLabel))
-                        .addComponent(groupCountLabel))
-                    .addComponent(confocalCountLabel, javax.swing.GroupLayout.Alignment.TRAILING))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, experimentInformationPanelLayout.createSequentialGroup()
+                        .addGap(55, 55, 55)
+                        .addComponent(subjectCountLabel))
+                    .addGroup(experimentInformationPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(nameLabel)
+                                .addComponent(confocalCountLabel, javax.swing.GroupLayout.Alignment.TRAILING))
+                            .addComponent(groupCountLabel, javax.swing.GroupLayout.Alignment.TRAILING))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(nameField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(confocalCountField)
-                    .addComponent(nameField)
-                    .addComponent(injectionDateField)
-                    .addComponent(fishCountField)
-                    .addComponent(groupCountField))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 230, Short.MAX_VALUE)
-                .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(newExperimentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(openExperimentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(convertButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(experimentInformationPanelLayout.createSequentialGroup()
+                        .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(fishCountField)
+                            .addComponent(groupCountField))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         experimentInformationPanelLayout.setVerticalGroup(
             experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(experimentInformationPanelLayout.createSequentialGroup()
-                .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(experimentInformationPanelLayout.createSequentialGroup()
-                        .addGap(6, 6, 6)
-                        .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(nameLabel)
-                            .addComponent(nameField))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(injectionDateLabel)
-                            .addComponent(injectionDateField))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(groupCountLabel)
-                            .addComponent(groupCountField))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(fishCountLabel)
-                            .addComponent(fishCountField))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(confocalCountLabel)
-                            .addComponent(confocalCountField)))
-                    .addGroup(experimentInformationPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(newExperimentButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(openExperimentButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(convertButton)))
-                .addContainerGap(7, Short.MAX_VALUE))
+                .addGap(6, 6, 6)
+                .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(nameLabel)
+                    .addComponent(nameField))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(groupCountLabel)
+                    .addComponent(groupCountField))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(subjectCountLabel)
+                    .addComponent(fishCountField))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(experimentInformationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(confocalCountLabel)
+                    .addComponent(confocalCountField))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         actionPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        refreshButton.setText("Refresh");
-        refreshButton.setEnabled(false);
-        refreshButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                refreshButtonActionPerformed(evt);
-            }
-        });
 
         flattenImagesButton.setText("Flatten images");
         flattenImagesButton.setEnabled(false);
@@ -239,14 +170,6 @@ public class MainMenuGUI extends javax.swing.JFrame {
         traceFishButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 traceFishButtonActionPerformed(evt);
-            }
-        });
-
-        countCellsButton.setText("Manual cell counting");
-        countCellsButton.setEnabled(false);
-        countCellsButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                countCellsButtonActionPerformed(evt);
             }
         });
 
@@ -274,18 +197,27 @@ public class MainMenuGUI extends javax.swing.JFrame {
             }
         });
 
-        analyzeCellsButton.setText("Analyze objects");
-        analyzeCellsButton.setEnabled(false);
-        analyzeCellsButton.addActionListener(new java.awt.event.ActionListener() {
+        exportObjectsButton.setText("Export objects");
+        exportObjectsButton.setEnabled(false);
+        exportObjectsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                analyzeCellsButtonActionPerformed(evt);
+                exportObjectsButtonActionPerformed(evt);
             }
         });
 
-        cellChannelSpinner.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
-        cellChannelSpinner.setEnabled(false);
+        openExperimentButton.setText("Open Experiment");
+        openExperimentButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openExperimentButtonActionPerformed(evt);
+            }
+        });
 
-        jLabel5.setText("Cell channel:");
+        newExperimentButton.setText("New Experiment");
+        newExperimentButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                newExperimentButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout actionPanelLayout = new javax.swing.GroupLayout(actionPanel);
         actionPanel.setLayout(actionPanelLayout);
@@ -293,44 +225,46 @@ public class MainMenuGUI extends javax.swing.JFrame {
             actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(actionPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(adjustContrastButton, javax.swing.GroupLayout.DEFAULT_SIZE, 153, Short.MAX_VALUE)
-                    .addComponent(makeMontageButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 153, Short.MAX_VALUE)
-                    .addComponent(refreshButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(flattenImagesButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(traceFishButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(SegmentCellsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 144, Short.MAX_VALUE)
-                    .addComponent(countCellsButton)
-                    .addComponent(analyzeCellsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cellChannelSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(54, Short.MAX_VALUE))
+                .addGroup(actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(actionPanelLayout.createSequentialGroup()
+                        .addGroup(actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(adjustContrastButton, javax.swing.GroupLayout.DEFAULT_SIZE, 153, Short.MAX_VALUE)
+                            .addComponent(flattenImagesButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(traceFishButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(openExperimentButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(newExperimentButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(actionPanelLayout.createSequentialGroup()
+                        .addComponent(SegmentCellsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 153, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, actionPanelLayout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGroup(actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(exportObjectsButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 153, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(makeMontageButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 153, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap())
         );
         actionPanelLayout.setVerticalGroup(
             actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(actionPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(refreshButton)
-                    .addComponent(countCellsButton))
+                    .addComponent(makeMontageButton)
+                    .addComponent(newExperimentButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(flattenImagesButton)
                     .addComponent(SegmentCellsButton)
-                    .addComponent(jLabel5)
-                    .addComponent(cellChannelSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(openExperimentButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(actionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(analyzeCellsButton)
-                    .addComponent(traceFishButton))
+                    .addComponent(exportObjectsButton)
+                    .addComponent(flattenImagesButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(traceFishButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(adjustContrastButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(makeMontageButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -382,10 +316,9 @@ public class MainMenuGUI extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
+                        .addGap(12, 12, 12)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(taskLable)
@@ -402,26 +335,31 @@ public class MainMenuGUI extends javax.swing.JFrame {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel1)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(fileNameField)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addComponent(fileNameField))))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(experimentInformationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(actionPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(progressBar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 615, Short.MAX_VALUE)
-                    .addComponent(fileProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(163, 163, 163)
+                        .addContainerGap()
+                        .addComponent(actionPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(experimentInformationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(12, 12, 12)
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lastSaveField)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 216, Short.MAX_VALUE)
                         .addComponent(abortButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(saveButton)))
+                        .addComponent(saveButton))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane1))
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(progressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(fileProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -431,11 +369,21 @@ public class MainMenuGUI extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(experimentInformationPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(actionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(2, 2, 2)
+                        .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(fileProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(saveButton)
+                            .addComponent(abortButton)
+                            .addComponent(lastSaveField)
+                            .addComponent(jLabel3)))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(taskLable)
@@ -449,65 +397,41 @@ public class MainMenuGUI extends javax.swing.JFrame {
                             .addComponent(jLabel2)
                             .addComponent(workingOnFileNumber)
                             .addComponent(jLabel4)
-                            .addComponent(totalFileNumber)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(fileProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(lastSaveField)
-                                .addComponent(jLabel3))
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(saveButton)
-                                .addComponent(abortButton)))
-                        .addContainerGap())))
+                            .addComponent(totalFileNumber))))
+                .addContainerGap(14, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
-        updateExperiment();
-    }//GEN-LAST:event_refreshButtonActionPerformed
-
     private void newExperimentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newExperimentButtonActionPerformed
         NewExperimentGUI newExperiment = new NewExperimentGUI(this, true);
         newExperiment.setLocationRelativeTo(this);
         newExperiment.setVisible(true);
-        ExperimentNew tempExperiment = newExperiment.getExperiment();
+        Experiment tempExperiment = newExperiment.getExperiment();
         if (tempExperiment == null ) return;
         this.experiment = tempExperiment;
         updateExperiment();
         flattenImagesButton.setEnabled(true);
         adjustContrastButton.setEnabled(true);
         traceFishButton.setEnabled(true);
-        countCellsButton.setEnabled(true);
+        //countCellsButton.setEnabled(true);
         saveButton.setEnabled(true);
+        //analyzeCellsButton.setEnabled(true);
         makeMontageButton.setEnabled(true);
         SegmentCellsButton.setEnabled(true);
-        cellChannelSpinner.setEnabled(true);
+        exportObjectsButton.setEnabled(true);
     }//GEN-LAST:event_newExperimentButtonActionPerformed
 
     private void openExperimentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openExperimentButtonActionPerformed
         final JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("XML experiment file", "xml");
+        fileChooser.addChoosableFileFilter(filter);
+        fileChooser.setAcceptAllFileFilterUsed(false);
         int returnVal = fileChooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-//            try {
-//                FileInputStream fileInStream = new FileInputStream(fileChooser.getSelectedFile());
-//                ObjectInputStream objectInStream = new ObjectInputStream(fileInStream);
-//                experiment = (Experiment) objectInStream.readObject();
-//                objectInStream.close();
-//                fileInStream.close();
-//            } catch (FileNotFoundException ex) {
-//                Logger.getLogger(MainMenuGUI.class.getName()).log(Level.SEVERE, null, ex);
-//            } catch (IOException ex) {
-//                Logger.getLogger(MainMenuGUI.class.getName()).log(Level.SEVERE, null, ex);
-//            } catch (ClassNotFoundException ex) {
-//                Logger.getLogger(MainMenuGUI.class.getName()).log(Level.SEVERE, null, ex);
-//            }
+
 
             ExperimentImporter importer = new ExperimentImporter(fileChooser.getSelectedFile());
             experiment = importer.importExperiment();
@@ -515,12 +439,12 @@ public class MainMenuGUI extends javax.swing.JFrame {
             flattenImagesButton.setEnabled(true);
             adjustContrastButton.setEnabled(true);
             traceFishButton.setEnabled(true);
-            countCellsButton.setEnabled(true);
+            //countCellsButton.setEnabled(true);
             saveButton.setEnabled(true);
-            analyzeCellsButton.setEnabled(true);
+            //analyzeCellsButton.setEnabled(true);
             makeMontageButton.setEnabled(true);
             SegmentCellsButton.setEnabled(true);
-            cellChannelSpinner.setEnabled(true);
+            exportObjectsButton.setEnabled(true);
         }
     }//GEN-LAST:event_openExperimentButtonActionPerformed
 
@@ -530,8 +454,8 @@ public class MainMenuGUI extends javax.swing.JFrame {
         flattenerGUI.setVisible(true);
         int tileSize = flattenerGUI.getTileSize();
         int projectionMethod = flattenerGUI.getProjectionMethod();
-        if((tileSize == 0) || (projectionMethod == 0)) return;
-        flattener = new OptiFlattener(experiment, this, tileSize, projectionMethod);
+        if(flattenerGUI.wasAborted()) return;
+        flattener = new Flattener(experiment, this, tileSize, projectionMethod);
         workThread = new Thread(flattener);
         workThread.start();
     }//GEN-LAST:event_flattenImagesButtonActionPerformed
@@ -542,54 +466,16 @@ public class MainMenuGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_abortButtonActionPerformed
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
-//        ExperimentNew newExperiment = new ExperimentNew(experiment.getName(), experiment.getConfocalDirectory(), experiment.getTimeOfFertilization(), experiment.getTimeOfInjection());
-//        newExperiment.setFishCount(experiment.getFishCount());
-//        newExperiment.setGroupCount(experiment.getGroupCount());
-//        newExperiment.setImageCount(experiment.getImageCount());
-//        ArrayList<FishGroupNew> newGroups = new ArrayList();
-//        for(FishGroup group : experiment.getGroups()) {
-//            FishGroupNew newGroup = new FishGroupNew(group.getGroupName());
-//            newGroup.setParent(newExperiment);
-//            ArrayList<FishNew> newFishList = new ArrayList();            
-//                    
-//            for(Fish fish : group.getFishList()) {
-//                FishNew newFish = new FishNew(fish.getName(), newGroup);
-//                ArrayList<MeasurementNew> newMeasurementList= new ArrayList();
-//                
-//                for(Measurement measurement : fish.getMeasurements()) {
-//                    MeasurementNew newMeasurement = new MeasurementNew(measurement.getConfocalFile(), newFish);
-//                    newMeasurement.setFishROI(measurement.getFishROI());
-//                    ArrayList<ImageAnalysisNew> newAnalysisList = new ArrayList();
-//                    
-//                    for(ImageAnalysis analysis : measurement.getAnalyses()){
-//                        ImageAnalysisNew newAnalysis = new ImageAnalysisNew(analysis.getAnalysisType(), analysis.getAnalysisFiles(), analysis.getChannelIDs(), analysis.getAnalysisTime(), newMeasurement);
-//                        newAnalysisList.add(newAnalysis);
-//                    }
-//                    newMeasurement.setAnalyses(newAnalysisList);
-//                    newMeasurementList.add(newMeasurement);
-//                }
-//                newFish.setMeasurements(newMeasurementList);
-//                newFishList.add(newFish);
-//            }
-//            newGroup.setFishList(newFishList);
-//            newGroups.add(newGroup);
-//        }
-//        newExperiment.setGroups(newGroups);
 
-        
-//        ExperimentXMLConverter converter = new ExperimentXMLConverter(experiment);
-//        ExperimentNew newExperiment = converter.convert();
-//        ExperimentExporterXML.exportExperiment(newExperiment);
-        
         saveExperiment();
         
     }//GEN-LAST:event_saveButtonActionPerformed
 
     private void adjustContrastButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_adjustContrastButtonActionPerformed
-        AdjustChannelsGUI contrastGUI = new AdjustChannelsGUI(this, true, experiment);
+        ContrastImageSelectorGUI contrastGUI = new ContrastImageSelectorGUI(this, true, experiment);
         contrastGUI.setLocationRelativeTo(this);
         contrastGUI.setVisible(true);
-        ImageAnalysisNew controllAnalysis = contrastGUI.getAnalysis();
+        ImageAnalysis controllAnalysis = contrastGUI.getAnalysis();
         if (controllAnalysis == null ) return;
         ContrastAdjuster contrastAdjust = new ContrastAdjuster(experiment, controllAnalysis);
         workThread = new Thread(contrastAdjust);
@@ -602,12 +488,6 @@ public class MainMenuGUI extends javax.swing.JFrame {
         workThread.start();
     }//GEN-LAST:event_traceFishButtonActionPerformed
 
-    private void countCellsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_countCellsButtonActionPerformed
-        CellFinder finder = new CellFinder(experiment, this);
-        workThread = new Thread(finder);
-        workThread.start();
-    }//GEN-LAST:event_countCellsButtonActionPerformed
-
     private void makeMontageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_makeMontageButtonActionPerformed
         MontageCreator montageCreator = new MontageCreator(experiment, this);
         workThread = new Thread(montageCreator);
@@ -615,24 +495,16 @@ public class MainMenuGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_makeMontageButtonActionPerformed
 
     private void SegmentCellsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SegmentCellsButtonActionPerformed
-        int cellChannel = (int) cellChannelSpinner.getValue();
-        cellChannel--;
-        AutomaticCellFinder cellFinder = new AutomaticCellFinder(experiment, this, cellChannel);
+        AutomaticCellFinder cellFinder = new AutomaticCellFinder(experiment, this);
         workThread = new Thread(cellFinder);
         workThread.start();
     }//GEN-LAST:event_SegmentCellsButtonActionPerformed
 
-    private void analyzeCellsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_analyzeCellsButtonActionPerformed
-        CellAnalysisGUI cellAnalysisGUI = new CellAnalysisGUI(this, true, experiment);
-        cellAnalysisGUI.setLocationRelativeTo(this);
-        cellAnalysisGUI.setVisible(true);
-    }//GEN-LAST:event_analyzeCellsButtonActionPerformed
-
-    private void convertButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_convertButtonActionPerformed
-        ExperimentXMLConverter converter = new ExperimentXMLConverter();
-        ExperimentExporterXML.exportExperiment(converter.convert());
-        
-    }//GEN-LAST:event_convertButtonActionPerformed
+    private void exportObjectsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportObjectsButtonActionPerformed
+        CellImporterCSV importer = new CellImporterCSV(experiment);
+        CellExporter exporter = new CellExporter(importer.getCellHolder().getGroupList(), experiment);
+        exporter.run();
+    }//GEN-LAST:event_exportObjectsButtonActionPerformed
 
     private void refreshExperimentTree() {
         
@@ -643,39 +515,27 @@ public class MainMenuGUI extends javax.swing.JFrame {
         }
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("Experiment: " + experiment.getName());
         
-        ArrayList<FishGroupNew> groupList = experiment.getGroups();
-        for (FishGroupNew fishGroup : groupList) {
-            DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode("Group: " + fishGroup.getGroupName());
-            ArrayList<FishNew> fishList = fishGroup.getFishList();
-            for (FishNew fish : fishList) {
-                DefaultMutableTreeNode fishNode = new DefaultMutableTreeNode("Fish: " + fish.getName());
-                ArrayList<MeasurementNew> measurementList = fish.getMeasurements();
-                for (MeasurementNew measurement : measurementList) {
+        ArrayList<ExperimentGroup> groupList = experiment.getGroups();
+        for (ExperimentGroup group : groupList) {
+            DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode("Group: " + group.getGroupName());
+            ArrayList<Subject> subjectList = group.getSubjectList();
+            for (Subject subject : subjectList) {
+                DefaultMutableTreeNode subjectNode = new DefaultMutableTreeNode("Subject: " + subject.getName());
+                ArrayList<Measurement> measurementList = subject.getMeasurements();
+                for (Measurement measurement : measurementList) {
                     DefaultMutableTreeNode measurementNode = new DefaultMutableTreeNode("Measurement: " + measurement.getFileName());
-                    ArrayList<ImageAnalysisNew> analysisList = measurement.getAnalysisList();
-                    for (ImageAnalysisNew analysis : analysisList) {
+                    ArrayList<ImageAnalysis> analysisList = measurement.getAnalysisList();
+                    for (ImageAnalysis analysis : analysisList) {
                         DefaultMutableTreeNode analysisNode = new DefaultMutableTreeNode("Analysis: " + analysis.getAnalysisName());
                         measurementNode.add(analysisNode);
                     }
-                    fishNode.add(measurementNode);
+                    subjectNode.add(measurementNode);
                 }
-                groupNode.add(fishNode);
+                groupNode.add(subjectNode);
             }
             root.add(groupNode);
         } 
         
-//        else {
-//            String[] fishList = experiment.getFishNames();
-//            for (String fishName : fishList) {
-//                DefaultMutableTreeNode fish = new DefaultMutableTreeNode("Fish: " + fishName);
-//                String[] acquisitionList = experiment.getFish(fishName).getMeasurementNames();
-//                for (String acquisitionName : acquisitionList) {
-//                    DefaultMutableTreeNode measurement = new DefaultMutableTreeNode("Measurement: " + acquisitionName);
-//                    fish.add(measurement);
-//                }
-//                root.add(fish);
-//            }  
-//        }
         experimentTree.setModel(new DefaultTreeModel(root));
     }
     
@@ -696,25 +556,24 @@ public class MainMenuGUI extends javax.swing.JFrame {
         fileProgressBar.setStringPainted(true);
     }
     public void setTask(String task, int taskID) {
-        System.out.println("In message");
+
         taskField.setText(task);
-        System.out.println("Task: " + taskField.getText());
-        ongoingOperation = taskID;
+ 
         newExperimentButton.setEnabled(false);
         openExperimentButton.setEnabled(false);
         flattenImagesButton.setEnabled(false);
         adjustContrastButton.setEnabled(false);
         traceFishButton.setEnabled(false);
-        countCellsButton.setEnabled(false);
+        //analyzeCellsButton.setEnabled(false);
+        //countCellsButton.setEnabled(false);
         abortButton.setEnabled(true);
         saveButton.setEnabled(false);
-        refreshButton.setEnabled(false);
+        //refreshButton.setEnabled(false);
         makeMontageButton.setEnabled(false);
         SegmentCellsButton.setEnabled(false);
-        cellChannelSpinner.setEnabled(false);
+        exportObjectsButton.setEnabled(false);
     }
     public void finishTask(String taskCompleted) {
-        ongoingOperation = 0;
         taskField.setText("None - " + taskCompleted + " finished");
         fileNameField.setText("None");
         totalFileNumber.setText(0 + "");
@@ -724,14 +583,15 @@ public class MainMenuGUI extends javax.swing.JFrame {
         openExperimentButton.setEnabled(true);
         flattenImagesButton.setEnabled(true);
         adjustContrastButton.setEnabled(true);
+        //analyzeCellsButton.setEnabled(true);
         traceFishButton.setEnabled(true);
-        countCellsButton.setEnabled(true);
+        //countCellsButton.setEnabled(true);
         abortButton.setEnabled(false);
         saveButton.setEnabled(true);
-        refreshButton.setEnabled(true);
+        //refreshButton.setEnabled(true);
         makeMontageButton.setEnabled(true);
         SegmentCellsButton.setEnabled(true);
-        cellChannelSpinner.setEnabled(true);
+        exportObjectsButton.setEnabled(true);
     }
     
     /**
@@ -777,28 +637,23 @@ public class MainMenuGUI extends javax.swing.JFrame {
     private javax.swing.JButton abortButton;
     private javax.swing.JPanel actionPanel;
     private javax.swing.JButton adjustContrastButton;
-    private javax.swing.JButton analyzeCellsButton;
-    private javax.swing.JSpinner cellChannelSpinner;
     private javax.swing.JLabel confocalCountField;
     private javax.swing.JLabel confocalCountLabel;
-    private javax.swing.JButton convertButton;
-    private javax.swing.JButton countCellsButton;
     private javax.swing.JPanel experimentInformationPanel;
     private javax.swing.JTree experimentTree;
+    private javax.swing.JButton exportObjectsButton;
     private javax.swing.JLabel fileNameField;
     private javax.swing.JProgressBar fileProgressBar;
     private javax.swing.JLabel fishCountField;
-    private javax.swing.JLabel fishCountLabel;
     private javax.swing.JButton flattenImagesButton;
     private javax.swing.JLabel groupCountField;
     private javax.swing.JLabel groupCountLabel;
-    private javax.swing.JLabel injectionDateField;
-    private javax.swing.JLabel injectionDateLabel;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
+    private javax.swing.JPopupMenu jPopupMenu1;
+    private javax.swing.JPopupMenu jPopupMenu2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lastSaveField;
     private javax.swing.JButton makeMontageButton;
@@ -807,8 +662,8 @@ public class MainMenuGUI extends javax.swing.JFrame {
     private javax.swing.JButton newExperimentButton;
     private javax.swing.JButton openExperimentButton;
     private javax.swing.JProgressBar progressBar;
-    private javax.swing.JButton refreshButton;
     private javax.swing.JButton saveButton;
+    private javax.swing.JLabel subjectCountLabel;
     private javax.swing.JLabel taskField;
     private javax.swing.JLabel taskLable;
     private javax.swing.JLabel totalFileNumber;
@@ -819,7 +674,6 @@ public class MainMenuGUI extends javax.swing.JFrame {
     private void updateExperiment() {
         if (experiment == null) return;
         nameField.setText(experiment.getName());
-        injectionDateField.setText(experiment.getTimeOfInjection().toString());
         groupCountField.setText(String.valueOf(experiment.getGroupCount()));
         fishCountField.setText(String.valueOf(experiment.getFishCount()));
         confocalCountField.setText(String.valueOf(experiment.getImageCount()));        
@@ -828,23 +682,10 @@ public class MainMenuGUI extends javax.swing.JFrame {
 
     public void saveExperiment() {
         if (experiment == null) return;
-        try {
-            FileOutputStream fileOutStream 
-                    = new FileOutputStream(experiment.getConfocalDirectory() 
-                    + "\\" + experiment.getName() 
-                    + ".exp");
-            ObjectOutputStream objectOutStream = new ObjectOutputStream(fileOutStream);
-            objectOutStream.writeObject(experiment);
-            objectOutStream.close();
-            fileOutStream.close();
-            lastSaveField.setText(Instant.now().toString());
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(MainMenuGUI.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(MainMenuGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        ExperimentExporterXML.exportExperiment(experiment);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+       LocalDateTime time = LocalDateTime.now(); 
+        lastSaveField.setText(formatter.format(time));
         updateExperiment();
     }
-
-    
 }

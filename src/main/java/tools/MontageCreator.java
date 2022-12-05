@@ -6,22 +6,15 @@
 package tools;
 
 import GUI.MainMenuGUI;
-import experiments.Constants;
-import experiments.Experiment;
-import experiments.ExperimentNew;
-import experiments.Fish;
-import experiments.FishGroup;
-import experiments.FishGroupNew;
-import experiments.FishNew;
-import experiments.ImageAnalysis;
-import experiments.ImageAnalysisNew;
-import experiments.Measurement;
-import experiments.MeasurementNew;
+import Containers.Constants;
+import Containers.Experiment.Experiment;
+import Containers.Experiment.ExperimentGroup;
+import Containers.Experiment.Subject;
+import Containers.Experiment.ImageAnalysis;
+import Containers.Experiment.Measurement;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.Overlay;
 import ij.gui.Roi;
-import ij.gui.WaitForUserDialog;
 import ij.io.RoiDecoder;
 import ij.plugin.Concatenator;
 import ij.plugin.MontageMaker;
@@ -31,6 +24,10 @@ import java.awt.Font;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,43 +42,43 @@ import org.apache.commons.csv.CSVPrinter;
  * @author janlu
  */
 public class MontageCreator implements Runnable{
-        ExperimentNew experiment;
+        Experiment experiment;
         MainMenuGUI parent;
         
-    public MontageCreator(ExperimentNew experiment, MainMenuGUI parent) {
+    public MontageCreator(Experiment experiment, MainMenuGUI parent) {
         this.experiment = experiment;
         this.parent = parent;
     }
     public void run() {
         sendStartMessage();
         createAllMontages();
-        createCellCSV();
+        //createCellCSV();
         sendStopMessage("Creating montage");
     }//Single Channels
     private void createAllMontages() {
-        for(FishGroupNew group : experiment.getGroups()) {
-            for (FishNew fish : group.getFishList()){
-                ArrayList<ImageAnalysisNew> croppedAnalysisList = new ArrayList();
-                ArrayList<ImageAnalysisNew> countedAnalysisList = new ArrayList();
+        for(ExperimentGroup group : experiment.getGroups()) {
+            for (Subject subject : group.getSubjectList()){
+                ArrayList<ImageAnalysis> croppedAnalysisList = new ArrayList();
+                //ArrayList<ImageAnalysis> countedAnalysisList = new ArrayList();
                 File[] fileList = new File[2];
-                for (MeasurementNew measurement : fish.getMeasurements()) {
-                    ImageAnalysisNew tempCropped = null;
-                    ImageAnalysisNew tempCounted = null;
+                for (Measurement measurement : subject.getMeasurements()) {
+                    ImageAnalysis tempCropped = null;
+                    //ImageAnalysis tempCounted = null;
                     boolean hasMontage = false;
-                    for (ImageAnalysisNew analysis : measurement.getAnalysisList()) {
+                    for (ImageAnalysis analysis : measurement.getAnalysisList()) {
                         if (analysis.isAnalysisType(Constants.ANALYSIS_MONTAGE)) {
                             hasMontage = true;
                         }
-                        if (analysis.isAnalysisType(Constants.ANALYSIS_CELLSCOUNTED)) tempCounted = analysis;
+                        //if (analysis.isAnalysisType(Constants.ANALYSIS_CELLSCOUNTED)) tempCounted = analysis;
                         if (analysis.isAnalysisType(Constants.ANALYSIS_CROPPED)) tempCropped = analysis;
                     }
                     if(!hasMontage) {
                         if (tempCropped != null) croppedAnalysisList.add(tempCropped);
-                        if (tempCounted != null) countedAnalysisList.add(tempCounted);
+                        //if (tempCounted != null) countedAnalysisList.add(tempCounted);
                     }
                 }
                 croppedAnalysisList.sort(null);
-                countedAnalysisList.sort(null);
+                //countedAnalysisList.sort(null);
                 ImagePlus[] imageArray;
                 
                 if (!croppedAnalysisList.isEmpty()) {
@@ -93,16 +90,21 @@ public class MontageCreator implements Runnable{
                         Font font = new Font("SansSerif", Font.PLAIN, 40);
                         ip.setFont(font);
                         ip.setColor(new Color(255, 255, 255));
-                        ip.drawString(croppedAnalysisList.get(i).getAnalysisTime().toString(), 40, 40);
-                        if (i == 0) ip.drawString(fish.getName(), imageArray[i].getWidth()/2, 40);
-                        if (croppedAnalysisList.get(i).isAnalysisType(Constants.ANALYSIS_CELLSCOUNTED)) {
-                            Roi fishRoi = RoiDecoder.open(croppedAnalysisList.get(i).getRois()[0].getAbsolutePath());
-                            Roi cellRoi = RoiDecoder.open(croppedAnalysisList.get(i).getRois()[1].getAbsolutePath());
-                            ip.setColor(new Color(255, 0, 0));
-                            ip.draw(fishRoi);
-                            ip.setColor(new Color(0, 0, 255));
-                            ip.draw(cellRoi);
-                        }
+                        
+                        ZoneId timeZone = ZonedDateTime.now().getZone();
+                        System.out.println("local zoneID: " + timeZone.toString());
+                        ZonedDateTime zonedAnalysisTime = ZonedDateTime.ofInstant(croppedAnalysisList.get(i).getAnalysisTime(), timeZone);
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+                        ip.drawString(zonedAnalysisTime.format(formatter), 40, 40);
+                        if (i == 0) ip.drawString("Subject: " + subject.getName(), 40, 85);
+//                        if (croppedAnalysisList.get(i).isAnalysisType(Constants.ANALYSIS_CELLSCOUNTED)) {
+//                            Roi fishRoi = RoiDecoder.open(croppedAnalysisList.get(i).getRois()[0].getAbsolutePath());
+//                            Roi cellRoi = RoiDecoder.open(croppedAnalysisList.get(i).getRois()[1].getAbsolutePath());
+//                            ip.setColor(new Color(255, 0, 0));
+//                            ip.draw(fishRoi);
+//                            ip.setColor(new Color(0, 0, 255));
+//                            ip.draw(cellRoi);
+//                        }
                     }
                     ImagePlus imageStack = Concatenator.run(imageArray);
                     MontageMaker montageMaker = new MontageMaker();
@@ -110,7 +112,7 @@ public class MontageCreator implements Runnable{
                     String saveString = experiment.getConfocalDirectory().getAbsolutePath()
                     + "\\ProcessedFiles\\Montage"
                     + "\\" + group.getGroupName()
-                    + "\\" + fish.getName() + "_CroppedMontage.tif";
+                    + "\\" + subject.getName() + "_CroppedMontage.tif";
                     File makeDir = new File(saveString);
                     makeDir = makeDir.getParentFile();
                     makeDir.mkdirs();
@@ -126,49 +128,49 @@ public class MontageCreator implements Runnable{
                     fileList[0] = makeDir;
                 }
                 
-                if (!countedAnalysisList.isEmpty()) {
-                    imageArray = new ImagePlus[countedAnalysisList.size()];
-                    for (int i = 0; i < countedAnalysisList.size(); i++) {
-                        imageArray[i] = IJ.openImage(countedAnalysisList.get(i).getAnalysisFiles()[0].getAbsolutePath());
-                        imageArray[i].flattenStack();
-                        ImageProcessor ip = imageArray[i].getProcessor();
-                        Font font = new Font("SansSerif", Font.PLAIN, 40);
-                        ip.setFont(font);
-                        ip.setColor(new Color(255, 255, 255));
-                        ip.drawString(countedAnalysisList.get(i).getAnalysisTime().toString(), 40, 40);
-                        if (i == 0) ip.drawString(fish.getName(), imageArray[i].getWidth()/2, 40);
-                        Roi fishRoi = RoiDecoder.open(countedAnalysisList.get(i).getRois()[0].getAbsolutePath());
-                        Roi cellRoi = RoiDecoder.open(countedAnalysisList.get(i).getRois()[1].getAbsolutePath());
-                        Overlay overlay = new Overlay(fishRoi);
-                        overlay.add(fishRoi);
-                        imageArray[i].setOverlay(overlay);
-                        imageArray[i] = imageArray[i].flatten();
-                        overlay.add(cellRoi);
-                        imageArray[i].setOverlay(overlay);
-                        imageArray[i] = imageArray[i].flatten();
-                    }
-                    
-                    ImagePlus imageStack = Concatenator.run(imageArray);
-                    MontageMaker montageMaker = new MontageMaker();
-                    ImagePlus montage = montageMaker.makeMontage2​(imageStack, 1, imageArray.length, 1, 1, imageArray.length, 1, 0, false);
-                    String saveString = experiment.getConfocalDirectory().getAbsolutePath()
-                    + "\\ProcessedFiles\\Montage"
-                    + "\\" + group.getGroupName()
-                    + "\\" + fish.getName() + "_CountedMontage.tif";
-                    File makeDir = new File(saveString);
-                    makeDir = makeDir.getParentFile();
-                    makeDir.mkdirs();
-                    IJ.save(montage, saveString);
-                    montage.changes = false;
-                    montage.close();
-                    imageStack.changes = false;
-                    imageStack.close();
-                    for (ImagePlus image : imageArray) {
-                        image.changes = false;
-                        image.close();
-                    }
-                    fileList[1] = makeDir;
-                }
+//                if (!countedAnalysisList.isEmpty()) {
+//                    imageArray = new ImagePlus[countedAnalysisList.size()];
+//                    for (int i = 0; i < countedAnalysisList.size(); i++) {
+//                        imageArray[i] = IJ.openImage(countedAnalysisList.get(i).getAnalysisFiles()[0].getAbsolutePath());
+//                        imageArray[i].flattenStack();
+//                        ImageProcessor ip = imageArray[i].getProcessor();
+//                        Font font = new Font("SansSerif", Font.PLAIN, 40);
+//                        ip.setFont(font);
+//                        ip.setColor(new Color(255, 255, 255));
+//                        ip.drawString(countedAnalysisList.get(i).getAnalysisTime().toString(), 40, 40);
+//                        if (i == 0) ip.drawString(subject.getName(), imageArray[i].getWidth()/2, 40);
+//                        Roi fishRoi = RoiDecoder.open(countedAnalysisList.get(i).getRois()[0].getAbsolutePath());
+//                        Roi cellRoi = RoiDecoder.open(countedAnalysisList.get(i).getRois()[1].getAbsolutePath());
+//                        Overlay overlay = new Overlay(fishRoi);
+//                        overlay.add(fishRoi);
+//                        imageArray[i].setOverlay(overlay);
+//                        imageArray[i] = imageArray[i].flatten();
+//                        overlay.add(cellRoi);
+//                        imageArray[i].setOverlay(overlay);
+//                        imageArray[i] = imageArray[i].flatten();
+//                    }
+//                    
+//                    ImagePlus imageStack = Concatenator.run(imageArray);
+//                    MontageMaker montageMaker = new MontageMaker();
+//                    ImagePlus montage = montageMaker.makeMontage2​(imageStack, 1, imageArray.length, 1, 1, imageArray.length, 1, 0, false);
+//                    String saveString = experiment.getConfocalDirectory().getAbsolutePath()
+//                    + "\\ProcessedFiles\\Montage"
+//                    + "\\" + group.getGroupName()
+//                    + "\\" + subject.getName() + "_CountedMontage.tif";
+//                    File makeDir = new File(saveString);
+//                    makeDir = makeDir.getParentFile();
+//                    makeDir.mkdirs();
+//                    IJ.save(montage, saveString);
+//                    montage.changes = false;
+//                    montage.close();
+//                    imageStack.changes = false;
+//                    imageStack.close();
+//                    for (ImagePlus image : imageArray) {
+//                        image.changes = false;
+//                        image.close();
+//                    }
+//                    fileList[1] = makeDir;
+//                }
             }
         }
     }
@@ -196,16 +198,16 @@ public class MontageCreator implements Runnable{
     private void createCellCSV() {
         ArrayList<ArrayList<String>> outList = new ArrayList();
         ArrayList<String[]> outLocationList = new ArrayList();
-        for(FishGroupNew group : experiment.getGroups()) {
-            for (FishNew fish : group.getFishList()){
-                ArrayList<ImageAnalysisNew> countedAnalysisList = new ArrayList();
+        for(ExperimentGroup group : experiment.getGroups()) {
+            for (Subject fish : group.getSubjectList()){
+                ArrayList<ImageAnalysis> countedAnalysisList = new ArrayList();
                 ArrayList<String> cellCounts = new ArrayList();
                 ArrayList<String> cellLocationsTemp = new ArrayList();
                 String[] cellLocations = new String[0];
                 cellCounts.add(group.getGroupName());
                 cellCounts.add(fish.getName());
-                for (MeasurementNew measurement : fish.getMeasurements()) {
-                    for (ImageAnalysisNew analysis : measurement.getAnalysisList()) {
+                for (Measurement measurement : fish.getMeasurements()) {
+                    for (ImageAnalysis analysis : measurement.getAnalysisList()) {
                         if (analysis.isAnalysisType(Constants.ANALYSIS_CELLSCOUNTED)) countedAnalysisList.add(analysis);
                     }
                 }
@@ -213,7 +215,7 @@ public class MontageCreator implements Runnable{
                 int largestCellCount = 0;
                 ArrayList<Integer> imageWidth = new ArrayList();
                 ArrayList<Integer> imageHeight = new ArrayList();
-                for (ImageAnalysisNew analysis : countedAnalysisList) {
+                for (ImageAnalysis analysis : countedAnalysisList) {
                     cellCounts.add(Integer.toString(analysis.getIntStorage()[0]));
                     if (analysis.getIntStorage()[0] > largestCellCount) largestCellCount = analysis.getIntStorage()[0];
                     ImagePlus imp = IJ.openImage(analysis.getAnalysisFiles()[0].getAbsolutePath());

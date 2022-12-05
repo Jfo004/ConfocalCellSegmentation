@@ -14,6 +14,7 @@ import ij.plugin.ZProjector;
 public class FlattenerGUI extends javax.swing.JDialog {
     int tileSize;
     int projectionMethod;
+    boolean wasAborted = false;
 
     /**
      * Creates new form FlattenerGUI
@@ -58,7 +59,7 @@ public class FlattenerGUI extends javax.swing.JDialog {
 
         jLabel1.setText("Tile size:");
 
-        tileSizeSelector.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1024", "2048" }));
+        tileSizeSelector.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "None", "1024", "2048" }));
 
         jLabel2.setText("Projection method:");
 
@@ -83,8 +84,7 @@ public class FlattenerGUI extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(tileSizeSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(projectionMethodSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, 0)))
+                            .addComponent(projectionMethodSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -109,7 +109,8 @@ public class FlattenerGUI extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
-        tileSize = Integer.parseInt((String)tileSizeSelector.getSelectedItem());
+        if ("None".equals((String)tileSizeSelector.getSelectedItem())) tileSize = 0;
+        else tileSize = Integer.parseInt((String)tileSizeSelector.getSelectedItem());
         //if ( "Maximum".equals(String)projectionMethodSelector.getSelectedItem())) projectionMethod = 
         switch ((String)projectionMethodSelector.getSelectedItem()) {
             case "Maximum":
@@ -128,6 +129,7 @@ public class FlattenerGUI extends javax.swing.JDialog {
     }//GEN-LAST:event_startButtonActionPerformed
 
     private void backButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backButtonActionPerformed
+        wasAborted = true;
         dispose();
     }//GEN-LAST:event_backButtonActionPerformed
 
@@ -183,10 +185,15 @@ public class FlattenerGUI extends javax.swing.JDialog {
     // End of variables declaration//GEN-END:variables
 
     int getTileSize() {
+        
         return tileSize;
     }
 
     int getProjectionMethod() {
         return projectionMethod;
+    }
+
+    boolean wasAborted() {
+        return wasAborted;
     }
 }

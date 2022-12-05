@@ -7,12 +7,12 @@ package tools;
 
 import GUI.CellAnalysisGUI;
 import GUI.MainMenuGUI;
-import experiments.Constants;
-import experiments.Experiment;
-import experiments.Fish;
-import experiments.FishGroup;
-import experiments.ImageAnalysis;
-import experiments.Measurement;
+import Containers.Constants;
+import Containers.Old.ExperimentOld;
+import Containers.Old.SubjectOld;
+import Containers.Old.GroupOld;
+import Containers.Old.ImageAnalysisOls;
+import Containers.Old.MeasurementOld;
 import ij.gui.Plot;
 import ij.gui.WaitForUserDialog;
 import java.util.ArrayList;
@@ -26,8 +26,8 @@ import mcib3d.geom.Objects3DPopulation;
 public class CellAnalysator implements Runnable{
 
     private final CellAnalysisGUI parent;
-    private final Experiment experiment;
-    private ArrayList<ImageAnalysis> analysisList = new ArrayList();
+    private final ExperimentOld experiment;
+    private ArrayList<ImageAnalysisOls> analysisList = new ArrayList();
     private Histogram experimentVolumeHistogram;
     private int nBins = 100;
     private int minVolumeGraph = 10;
@@ -35,7 +35,7 @@ public class CellAnalysator implements Runnable{
     private int minViableCellVolume;
     private int maxViableCellVolume;
     
-    public CellAnalysator(Experiment experiment,CellAnalysisGUI parent) {
+    public CellAnalysator(ExperimentOld experiment,CellAnalysisGUI parent) {
         this.parent = parent;
         this.experiment = experiment;
     }
@@ -46,10 +46,10 @@ public class CellAnalysator implements Runnable{
     }
 
     private void createMeasurementList() {
-        for (FishGroup fishGroup : experiment.getGroups()) {
-            for (Fish fish : fishGroup.getFishList()) {
-                for (Measurement measurement : fish.getMeasurements()) {
-                    for (ImageAnalysis analysis : measurement.getAnalyses()) {
+        for (GroupOld fishGroup : experiment.getGroups()) {
+            for (SubjectOld fish : fishGroup.getFishList()) {
+                for (MeasurementOld measurement : fish.getMeasurements()) {
+                    for (ImageAnalysisOls analysis : measurement.getAnalyses()) {
                         if (analysis.isAnalysisType(Constants.ANALYSIS_CELLSSEGMENTED)) analysisList.add(analysis);
                     }
                 }
@@ -59,7 +59,7 @@ public class CellAnalysator implements Runnable{
 
     private void createExperimentVolumeHistogram() {
         //experimentVolumeHistogram = new Histogram();
-        for (ImageAnalysis analysis : analysisList) {
+        for (ImageAnalysisOls analysis : analysisList) {
             Objects3DPopulation population = new Objects3DPopulation();
             population.loadObjects(analysis.getRois()[0].getAbsolutePath());
             List objects = population.getMeasuresGeometrical();

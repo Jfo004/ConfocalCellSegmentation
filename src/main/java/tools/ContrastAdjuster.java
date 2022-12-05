@@ -5,17 +5,17 @@
  */
 package tools;
 
-import experiments.Constants;
-import experiments.Experiment;
-import experiments.ExperimentNew;
-import experiments.Fish;
-import experiments.FishGroup;
-import experiments.FishGroupNew;
-import experiments.FishNew;
-import experiments.ImageAnalysis;
-import experiments.ImageAnalysisNew;
-import experiments.Measurement;
-import experiments.MeasurementNew;
+import Containers.Constants;
+import Containers.Old.ExperimentOld;
+import Containers.Experiment.Experiment;
+import Containers.Old.SubjectOld;
+import Containers.Old.GroupOld;
+import Containers.Experiment.ExperimentGroup;
+import Containers.Experiment.Subject;
+import Containers.Old.ImageAnalysisOls;
+import Containers.Experiment.ImageAnalysis;
+import Containers.Old.MeasurementOld;
+import Containers.Experiment.Measurement;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.WaitForUserDialog;
@@ -31,10 +31,10 @@ public class ContrastAdjuster implements Runnable{
         double channelIntensityMin;
         double[] compositeIntensitiesMax;
         double[] compositeIntensitiesMin;
-        ExperimentNew experiment;
-        ImageAnalysisNew controllAnalysis;
+        Experiment experiment;
+        ImageAnalysis controllAnalysis;
         
-    public ContrastAdjuster(ExperimentNew experiment, ImageAnalysisNew controllAnalysis) {
+    public ContrastAdjuster(Experiment experiment, ImageAnalysis controllAnalysis) {
         this.experiment = experiment;
         this.controllAnalysis = controllAnalysis;
 
@@ -56,10 +56,10 @@ public class ContrastAdjuster implements Runnable{
             channelIntensityMax = controllImage.getDisplayRangeMax();
             channelIntensityMin = controllImage.getDisplayRangeMin();
             controllImage.close();
-            for (FishGroupNew group : experiment.getGroups()) {
-                for (FishNew fish : group.getFishList()) {
-                    for (MeasurementNew measurement : fish.getMeasurements()) {
-                        for (ImageAnalysisNew analysis : measurement.getAnalysisList()) {
+            for (ExperimentGroup group : experiment.getGroups()) {
+                for (Subject fish : group.getSubjectList()) {
+                    for (Measurement measurement : fish.getMeasurements()) {
+                        for (ImageAnalysis analysis : measurement.getAnalysisList()) {
                             if (!analysis.isAnalysisType(Constants.ANALYSIS_FLATTENED)) {
                                 System.out.println("Skipped analysis: " + analysis.getAnalysisName());
                                 continue;
@@ -93,17 +93,17 @@ public class ContrastAdjuster implements Runnable{
             compositeIntensitiesMin[i-1] = controllImage.getDisplayRangeMin();
         }
         controllImage.close();
-        for (FishGroupNew group : experiment.getGroups()) {
-            for (FishNew fish : group.getFishList()) {
-                for (MeasurementNew measurement : fish.getMeasurements()) {
-                    for (ImageAnalysisNew analysis : measurement.getAnalysisList()) {
-                        if (!analysis.isAnalysisType(Constants.ANALYSIS_FLATTENED)) {
+        for (ExperimentGroup group : experiment.getGroups()) {
+            for (Subject fish : group.getSubjectList()) {
+                for (Measurement measurement : fish.getMeasurements()) {
+                    for (ImageAnalysis analysis : measurement.getAnalysisList()) {
+                        if (!(analysis.isAnalysisType(Constants.ANALYSIS_FLATTENED) || analysis.isAnalysisType(Constants.ANALYSIS_CROPPED))) {
                             System.out.println("Skipped analysis(Comp): " + analysis.getAnalysisName());
                             continue;
                         }
-                        if (compositeIndex > analysis.getAnalysisFiles().length -1){
-                            System.out.println("Out of index(Comp): " + compositeIndex + " in " + analysis.getAnalysisName());
-                        }
+                        if(analysis.isAnalysisType(Constants.ANALYSIS_CROPPED)) compositeIndex = 0;
+                        if(analysis.isAnalysisType(Constants.ANALYSIS_FLATTENED)) compositeIndex = controllAnalysis.getChannelIDs().length -1;
+                        
                         imagePath = analysis.getAnalysisFiles()[compositeIndex].getAbsolutePath();
                         if (!imagePath.endsWith(".tif")) imagePath = imagePath.concat(".tif");
                         ImagePlus image = IJ.openImage(imagePath);

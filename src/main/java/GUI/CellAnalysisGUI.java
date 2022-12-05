@@ -5,13 +5,11 @@
  */
 package GUI;
 
-import experiments.Experiment;
-import experiments.ExperimentNew;
+import Containers.Experiment.Experiment;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Random;
 import javax.swing.DefaultListModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -23,26 +21,14 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.LogAxis;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.IntervalMarker;
-import org.jfree.chart.plot.Marker;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.renderer.category.BarRenderer;
-import org.jfree.chart.renderer.category.StandardBarPainter;
-import org.jfree.chart.renderer.xy.StackedXYBarRenderer;
 import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
-import org.jfree.data.xy.DefaultXYDataset;
-import org.jfree.data.xy.IntervalXYDataset;
-import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYIntervalSeriesCollection;
-import org.jfree.data.xy.XYSeriesCollection;
 import tools.CellAnalysator;
-import tools.CellDay;
+import Containers.Cells.CellDay;
 import tools.CellSubject;
-import tools.CellGroup;
-import tools.CellHolder;
-import tools.CellImporter;
-import tools.CellPositionExporter;
-import tools.Histogram;
+import Containers.Cells.CellGroup;
+import Containers.Cells.CellHolder;
 import tools.MarkerHolder;
 import tools.VolumeHistogramGenerator;
 import tools.CellExporter;
@@ -55,7 +41,7 @@ import tools.CellImporterCSV;
 public class CellAnalysisGUI extends javax.swing.JDialog {
     private CellAnalysator cellAnalysator;
     private VolumeHistogramGenerator histogramGenerator;
-    private ExperimentNew experiment;
+    private Experiment experiment;
     private MainMenuGUI parent;
     private CellHolder cellHolder;
     ChartPanel chartPanel;
@@ -76,7 +62,7 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
     /**
      * Creates new form CellAnalysisGUI
      */
-    public CellAnalysisGUI(java.awt.Frame parent, boolean modal, ExperimentNew experiment) {
+    public CellAnalysisGUI(java.awt.Frame parent, boolean modal, Experiment experiment) {
         super(parent, modal);
         this.parent = (MainMenuGUI) parent;
         this.experiment = experiment;
@@ -95,18 +81,14 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
 
         closeButton = new javax.swing.JButton();
         saveButton = new javax.swing.JButton();
-        jTabbedPane1 = new javax.swing.JTabbedPane();
-        jPanel1 = new javax.swing.JPanel();
+        tabbedPane = new javax.swing.JTabbedPane();
+        volumeHistogramPane = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         minDisplayVolumeField = new javax.swing.JFormattedTextField();
         jLabel2 = new javax.swing.JLabel();
         maxDisplayVolumeField = new javax.swing.JFormattedTextField();
         jLabel3 = new javax.swing.JLabel();
         nBinsField = new javax.swing.JFormattedTextField();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        minThresholdField = new javax.swing.JFormattedTextField();
-        maxThresholdField = new javax.swing.JFormattedTextField();
         logScaleCheckBox = new javax.swing.JCheckBox();
         jScrollPane1 = new javax.swing.JScrollPane();
         volumeHistogramTree = new javax.swing.JTree();
@@ -125,7 +107,8 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
         histogramChartPanel = new javax.swing.JPanel();
         minSliderX = new javax.swing.JSlider();
         maxSliderX = new javax.swing.JSlider();
-        jPanel2 = new javax.swing.JPanel();
+        excludeOverflowCheckbox = new javax.swing.JCheckBox();
+        cellCountPane = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         cellCountTree = new javax.swing.JTree();
         jScrollPane4 = new javax.swing.JScrollPane();
@@ -133,6 +116,7 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
         cellCountChartPanel = new javax.swing.JPanel();
         cellCountDrawGraphButton = new javax.swing.JToggleButton();
         exportCellCountButton = new javax.swing.JButton();
+        scatterPlotPane = new javax.swing.JTabbedPane();
         loadingBar = new javax.swing.JProgressBar();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -146,20 +130,20 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
 
         saveButton.setText("Save");
 
-        jTabbedPane1.addChangeListener(new javax.swing.event.ChangeListener() {
+        tabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                jTabbedPane1StateChanged(evt);
+                tabbedPaneStateChanged(evt);
             }
         });
-        jTabbedPane1.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+        tabbedPane.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
-                jTabbedPane1PropertyChange(evt);
+                tabbedPanePropertyChange(evt);
             }
         });
 
-        jPanel1.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+        volumeHistogramPane.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
-                jPanel1PropertyChange(evt);
+                volumeHistogramPanePropertyChange(evt);
             }
         });
 
@@ -225,36 +209,6 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
         nBinsField.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
                 nBinsFieldPropertyChange(evt);
-            }
-        });
-
-        jLabel4.setText("Min threshold:");
-
-        jLabel5.setText("Max threshold:");
-
-        minThresholdField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.00"))));
-        minThresholdField.setText("0.00");
-        minThresholdField.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                minThresholdFieldFocusLost(evt);
-            }
-        });
-        minThresholdField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                minThresholdFieldActionPerformed(evt);
-            }
-        });
-
-        maxThresholdField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0.00"))));
-        maxThresholdField.setText("0.0");
-        maxThresholdField.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                maxThresholdFieldFocusLost(evt);
-            }
-        });
-        maxThresholdField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                maxThresholdFieldActionPerformed(evt);
             }
         });
 
@@ -334,101 +288,99 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
             }
         });
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        excludeOverflowCheckbox.setText("exclude overflow");
+        excludeOverflowCheckbox.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                excludeOverflowCheckboxStateChanged(evt);
+            }
+        });
+
+        javax.swing.GroupLayout volumeHistogramPaneLayout = new javax.swing.GroupLayout(volumeHistogramPane);
+        volumeHistogramPane.setLayout(volumeHistogramPaneLayout);
+        volumeHistogramPaneLayout.setHorizontalGroup(
+            volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(volumeHistogramPaneLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, volumeHistogramPaneLayout.createSequentialGroup()
+                        .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(logScaleCheckBox)
-                            .addComponent(jLabel5)
-                            .addComponent(jLabel4)
                             .addComponent(jLabel3)
                             .addComponent(jLabel1)
                             .addComponent(jLabel2))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(minDisplayVolumeField)
-                            .addComponent(maxDisplayVolumeField, javax.swing.GroupLayout.DEFAULT_SIZE, 73, Short.MAX_VALUE)
-                            .addComponent(nBinsField, javax.swing.GroupLayout.DEFAULT_SIZE, 73, Short.MAX_VALUE)
-                            .addComponent(minThresholdField)
-                            .addComponent(maxThresholdField)))
+                            .addComponent(maxDisplayVolumeField)
+                            .addComponent(nBinsField)
+                            .addComponent(excludeOverflowCheckbox)))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 288, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addGroup(volumeHistogramPaneLayout.createSequentialGroup()
                         .addComponent(cumulativeHistogramCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(setTreeSelectionButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(volumeHistogramPaneLayout.createSequentialGroup()
                         .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 98, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(10, 10, 10)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(volumeHistogramPaneLayout.createSequentialGroup()
                                 .addComponent(markerLabelLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(markerLabelField, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
+                            .addGroup(volumeHistogramPaneLayout.createSequentialGroup()
                                 .addComponent(jLabel7)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(jLabel9))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
+                            .addGroup(volumeHistogramPaneLayout.createSequentialGroup()
                                 .addComponent(jLabel8)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(addMarkerButton, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel10)))))
                     .addComponent(removeMarkerButton))
                 .addGap(44, 44, 44)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(maxSliderX, javax.swing.GroupLayout.DEFAULT_SIZE, 1077, Short.MAX_VALUE)
                     .addComponent(minSliderX, javax.swing.GroupLayout.DEFAULT_SIZE, 1077, Short.MAX_VALUE)
                     .addComponent(histogramChartPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addGap(0, 3, Short.MAX_VALUE))
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        volumeHistogramPaneLayout.setVerticalGroup(
+            volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(volumeHistogramPaneLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(minDisplayVolumeField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(maxDisplayVolumeField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel3)
                     .addComponent(nBinsField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(minThresholdField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.TRAILING))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel5)
-                    .addComponent(maxThresholdField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(logScaleCheckBox)
-                .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(logScaleCheckBox)
+                    .addComponent(excludeOverflowCheckbox))
+                .addGap(74, 74, 74)
+                .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addGroup(volumeHistogramPaneLayout.createSequentialGroup()
+                        .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, volumeHistogramPaneLayout.createSequentialGroup()
+                                .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(markerLabelField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(markerLabelLabel))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel7)
                                     .addComponent(jLabel9))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel8)
                                     .addComponent(jLabel10))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -437,20 +389,20 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(removeMarkerButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(volumeHistogramPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(setTreeSelectionButton)
                     .addComponent(cumulativeHistogramCheckBox))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(jPanel1Layout.createSequentialGroup()
+            .addGroup(volumeHistogramPaneLayout.createSequentialGroup()
                 .addComponent(histogramChartPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 649, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(minSliderX, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 18, Short.MAX_VALUE)
                 .addComponent(maxSliderX, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Volume histogram", jPanel1);
+        tabbedPane.addTab("Volume histogram", volumeHistogramPane);
 
         jScrollPane2.setViewportView(cellCountTree);
 
@@ -488,17 +440,17 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
             }
         });
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout cellCountPaneLayout = new javax.swing.GroupLayout(cellCountPane);
+        cellCountPane.setLayout(cellCountPaneLayout);
+        cellCountPaneLayout.setHorizontalGroup(
+            cellCountPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(cellCountPaneLayout.createSequentialGroup()
+                .addGroup(cellCountPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 285, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
+                    .addGroup(cellCountPaneLayout.createSequentialGroup()
                         .addContainerGap()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(cellCountPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(cellCountPaneLayout.createSequentialGroup()
                                 .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cellCountDrawGraphButton))
@@ -507,16 +459,16 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
                 .addComponent(cellCountChartPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
+        cellCountPaneLayout.setVerticalGroup(
+            cellCountPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(cellCountPaneLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(cellCountPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cellCountChartPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
+                    .addGroup(cellCountPaneLayout.createSequentialGroup()
                         .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(cellCountPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(cellCountDrawGraphButton))
                         .addGap(18, 18, 18)
@@ -524,7 +476,8 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
                 .addContainerGap(40, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Cell count", jPanel2);
+        tabbedPane.addTab("Cell count", cellCountPane);
+        tabbedPane.addTab("Scatter plot", scatterPlotPane);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -539,14 +492,14 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
                         .addComponent(saveButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(closeButton))
-                    .addComponent(jTabbedPane1))
+                    .addComponent(tabbedPane))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1)
+                .addComponent(tabbedPane)
                 .addGap(48, 48, 48)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(loadingBar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -563,13 +516,13 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
         loadCells();
     }//GEN-LAST:event_windowOpened
 
-    private void jTabbedPane1PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1PropertyChange
+    private void tabbedPanePropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_tabbedPanePropertyChange
 
-    }//GEN-LAST:event_jTabbedPane1PropertyChange
+    }//GEN-LAST:event_tabbedPanePropertyChange
 
-    private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
+    private void tabbedPaneStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabbedPaneStateChanged
 
-    }//GEN-LAST:event_jTabbedPane1StateChanged
+    }//GEN-LAST:event_tabbedPaneStateChanged
 
     private void exportCellCountButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportCellCountButtonActionPerformed
         ArrayList<IntervalMarker> markers = new ArrayList();
@@ -582,9 +535,9 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
         // TODO add your handling code here:
     }//GEN-LAST:event_cellCountDrawGraphButtonActionPerformed
 
-    private void jPanel1PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jPanel1PropertyChange
+    private void volumeHistogramPanePropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_volumeHistogramPanePropertyChange
 
-    }//GEN-LAST:event_jPanel1PropertyChange
+    }//GEN-LAST:event_volumeHistogramPanePropertyChange
 
     private void maxSliderXMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_maxSliderXMouseDragged
         updateMarker();
@@ -642,22 +595,6 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
         toggleLogScale();
     }//GEN-LAST:event_logScaleCheckBoxActionPerformed
 
-    private void maxThresholdFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_maxThresholdFieldActionPerformed
-        updateCutoff();
-    }//GEN-LAST:event_maxThresholdFieldActionPerformed
-
-    private void maxThresholdFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_maxThresholdFieldFocusLost
-        updateCutoff();
-    }//GEN-LAST:event_maxThresholdFieldFocusLost
-
-    private void minThresholdFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_minThresholdFieldActionPerformed
-        updateCutoff();
-    }//GEN-LAST:event_minThresholdFieldActionPerformed
-
-    private void minThresholdFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_minThresholdFieldFocusLost
-        updateCutoff();
-    }//GEN-LAST:event_minThresholdFieldFocusLost
-
     private void nBinsFieldPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_nBinsFieldPropertyChange
         // TODO add your handling code here:
     }//GEN-LAST:event_nBinsFieldPropertyChange
@@ -698,6 +635,10 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
     private void minDisplayVolumeFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_minDisplayVolumeFieldFocusLost
         updateDisplayRange();
     }//GEN-LAST:event_minDisplayVolumeFieldFocusLost
+
+    private void excludeOverflowCheckboxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_excludeOverflowCheckboxStateChanged
+        updateCutoff();
+    }//GEN-LAST:event_excludeOverflowCheckboxStateChanged
 
     /**
      * @param args the command line arguments
@@ -745,27 +686,24 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
     private javax.swing.JButton addMarkerButton;
     private javax.swing.JPanel cellCountChartPanel;
     private javax.swing.JToggleButton cellCountDrawGraphButton;
+    private javax.swing.JPanel cellCountPane;
     private javax.swing.JTree cellCountTree;
     private javax.swing.JButton closeButton;
     private javax.swing.JCheckBox cumulativeHistogramCheckBox;
+    private javax.swing.JCheckBox excludeOverflowCheckbox;
     private javax.swing.JButton exportCellCountButton;
     private javax.swing.JPanel histogramChartPanel;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JProgressBar loadingBar;
     private javax.swing.JCheckBox logScaleCheckBox;
     private javax.swing.JList<String> markerJList;
@@ -774,14 +712,15 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
     private javax.swing.JLabel markerLabelLabel;
     private javax.swing.JFormattedTextField maxDisplayVolumeField;
     private javax.swing.JSlider maxSliderX;
-    private javax.swing.JFormattedTextField maxThresholdField;
     private javax.swing.JFormattedTextField minDisplayVolumeField;
     private javax.swing.JSlider minSliderX;
-    private javax.swing.JFormattedTextField minThresholdField;
     private javax.swing.JFormattedTextField nBinsField;
     private javax.swing.JButton removeMarkerButton;
     private javax.swing.JButton saveButton;
+    private javax.swing.JTabbedPane scatterPlotPane;
     private javax.swing.JButton setTreeSelectionButton;
+    private javax.swing.JTabbedPane tabbedPane;
+    private javax.swing.JPanel volumeHistogramPane;
     private javax.swing.JTree volumeHistogramTree;
     // End of variables declaration//GEN-END:variables
 
@@ -851,8 +790,8 @@ public class CellAnalysisGUI extends javax.swing.JDialog {
         double minValue;
         double maxValue;
         try {
-            minValue = Double.parseDouble(minThresholdField.getText());
-            maxValue = Double.parseDouble(maxThresholdField.getText());
+            minValue = Double.parseDouble(minDisplayVolumeField.getText());
+            maxValue = Double.parseDouble(maxDisplayVolumeField.getText());
         }
         catch (NumberFormatException e){
             return;
