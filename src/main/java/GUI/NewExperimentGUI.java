@@ -114,6 +114,11 @@ public class NewExperimentGUI extends javax.swing.JDialog {
         jLabel1.setText("File type:");
 
         fileTypeBox.setModel(new DefaultComboBoxModel<>(FileType.values()));
+        fileTypeBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fileTypeBoxActionPerformed(evt);
+            }
+        });
 
         channelTable.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
@@ -207,7 +212,7 @@ public class NewExperimentGUI extends javax.swing.JDialog {
     private void createExperimentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createExperimentButtonActionPerformed
 
         if (StringUtils.isBlank(experimentNameField.getText())) {
-            experimentNameLable.setForeground(new Color(255, 0, 0));
+            experimentNameLable.setForeground(new Color(255, 0, 0)); 
             return;
         }
         else experimentNameLable.setForeground(new Color(0, 0, 0));
@@ -267,6 +272,7 @@ public class NewExperimentGUI extends javax.swing.JDialog {
             confocalDirectory = fileChooser.getSelectedFile();
             this.confocalFolderField.setText("Processing...");
             updateTable();
+            this.confocalFolderField.setText(confocalDirectory.getName());
         }        
     }//GEN-LAST:event_confocalFolderButtonActionPerformed
 
@@ -286,6 +292,10 @@ public class NewExperimentGUI extends javax.swing.JDialog {
         Boolean currentValue = (Boolean)channelTable.getValueAt(channelTable.getSelectedRow(), column);
         channelTable.getModel().setValueAt(!currentValue, channelTable.getSelectedRow(), column);
     }//GEN-LAST:event_channelTableMouseReleased
+
+    private void fileTypeBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileTypeBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_fileTypeBoxActionPerformed
 
     public Experiment getExperiment() {
         return experiment;
@@ -425,7 +435,7 @@ public class NewExperimentGUI extends javax.swing.JDialog {
         channelTable.getTableHeader().setReorderingAllowed(false);
         channelTable.getTableHeader().setResizingAllowed(false);
         this.confocalFolderField.setText("Selected");
-        this.folderInformationLabel.setText("Folder: " + confocalDirectory.getName() + "   Images: " + imageCount);
+        this.folderInformationLabel.setText("Images: " + imageCount);
         
         
         //Setup table

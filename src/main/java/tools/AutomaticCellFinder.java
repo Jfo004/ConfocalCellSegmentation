@@ -254,6 +254,7 @@ public class AutomaticCellFinder implements Runnable{
     }
 
     private ImagePlus importCroppedChannel(Measurement measurement, int channel) {
+        System.out.println(measurement.getFishLocation().getAbsolutePath());
         Roi fishRoi = RoiDecoder.open(measurement.getFishLocation().getAbsolutePath());
         int startX = fishRoi.getBounds().x;
         int startY = fishRoi.getBounds().y;
@@ -491,12 +492,15 @@ public class AutomaticCellFinder implements Runnable{
                 header[index + 3] = "Channel." + measureChannels.get(i) + ".Median.Intensity";
                 header[index + 4] = "Channel." + measureChannels.get(i) + ".Integrated.Intensity";
             }
-            writer.writeNext(header);           
+            writer.writeNext(header);
+            int imageWidth = targetIH.sizeX;
+            int imageHeight = targetIH.sizeY;
+            int imageDepth = targetIH.sizeZ;
             for (Object3D object : population.getObjectsList()) {
                 String objectNumber = String.valueOf(object.getValue());
-                String positionX = String.valueOf(object.getCenterX());
-                String positionY = String.valueOf(object.getCenterY());
-                String positionZ = String.valueOf(object.getCenterZ());
+                String positionX = String.valueOf(object.getCenterX()/imageWidth);
+                String positionY = String.valueOf(object.getCenterY()/imageHeight);
+                String positionZ = String.valueOf(object.getCenterZ()/imageDepth);
                 String volumePix = String.valueOf(object.getVolumePixels());
                 String volumeUnit = String.valueOf(object.getVolumeUnit());
                 String surfacePix = String.valueOf(object.getAreaPixels());

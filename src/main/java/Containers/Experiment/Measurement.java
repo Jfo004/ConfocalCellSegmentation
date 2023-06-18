@@ -189,6 +189,7 @@ public class Measurement implements Serializable {
     void createRelativeFilePath() {
         relativeConfocalPath = getRelativePath(parent.getParentFishGroup().getParent().getConfocalDirectory(), confocalFile);
         if (fishLocation != null) relativeFishLocationPath = getRelativePath(parent.getParentFishGroup().getParent().getConfocalDirectory(), fishLocation);
+        System.out.println(" string: " + relativeFishLocationPath);
         for (ImageAnalysis analysis : analysisList) {
             analysis.createRelativeFilePath();
         }

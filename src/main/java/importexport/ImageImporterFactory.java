@@ -21,6 +21,9 @@ public class ImageImporterFactory {
             case TIFF:
                 imageImporter = new TIFFImporter();
                 break;
+            case OIR:
+                imageImporter = new OIRImporter();
+                break;
             default:
                 
                 return null;

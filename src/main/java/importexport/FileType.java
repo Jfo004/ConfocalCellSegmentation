@@ -9,5 +9,5 @@ package importexport;
  * @author Jan-Lukas Foerde
  */
 public enum FileType {
-    IMS, TIFF //, OIR
+    IMS, TIFF , OIR
 }
